@@ -20,8 +20,8 @@ def dice(pred: np.ndarray, target: np.ndarray, eps: float = 1e-7):
 
 
 def jaccard(preds: np.ndarray, trues: np.ndarray, eps: float = 1e-7):
-    preds_inner = preds.cpu().data.numpy().copy()
-    trues_inner = trues.cpu().data.numpy().copy()
+    preds_inner = preds.copy()
+    trues_inner = trues.copy()
 
     preds_inner = np.reshape(preds_inner, (preds_inner.shape[0], preds_inner.size // preds_inner.shape[0]))
     trues_inner = np.reshape(trues_inner, (trues_inner.shape[0], trues_inner.size // trues_inner.shape[0]))
