@@ -144,7 +144,7 @@ class ComposedLoss(Module):
         for l, c in zip(self._losses, self._coeffs):
             res += self._apply_weight(l(*args, **kwargs), c)
 
-        return res / len(self._losses)
+        return res
 
 
 class MulticlassSegmentationLoss(Module):
