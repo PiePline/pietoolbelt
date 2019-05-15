@@ -1,0 +1,12 @@
+.idea
+__pycache__
+*.log
+result
+workdir
+doctrees/
+.buildinfo
+docs/source/_*
+dist
+build
+*.egg-info
+
