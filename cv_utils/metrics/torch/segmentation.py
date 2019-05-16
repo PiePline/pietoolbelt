@@ -5,97 +5,157 @@ import numpy as np
 
 from cv_utils.models.utils import Activation
 
+__all__ = ['dice', 'jaccard', 'multiclass_dice', 'multiclass_jaccard',
+           'DiceMetric', 'JaccardMetric', 'SegmentationMetricsProcessor',
+           'MulticlassDiceMetric', 'MulticlassJaccardMetric', 'MulticlassSegmentationMetricsProcessor']
 
-def split_masks_by_classes(pred: Tensor, target: Tensor):
+
+def _split_masks_by_classes(pred: Tensor, target: Tensor) -> []:
+    """
+    Split masks by classes
+
+    Args:
+        pred (Tensor): predicted masks of shape [B, C, H, W]
+        target (Tensor): target masks of shape [B, C, H, W]
+
+    Returns:
+        List: list of masks pairs [pred, target], splitted by channels. List shape: [C, 2, B, H, W]
+    """
     preds = torch.split(pred, 1, dim=1)
     targets = torch.split(target, 1, dim=1)
 
     return list(zip(preds, targets))
 
 
-def dice(pred: torch.Tensor, target: torch.Tensor, eps: float = 1e-7):
-    iflat = pred.contiguous().view(-1)
-    tflat = target.contiguous().view(-1)
+def dice(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tensor:
+    """
+    Calculate Dice coefficient
 
-    intersection = (iflat * tflat).sum()
+    Args:
+        pred (Tensor): predicted masks of shape [B, H, W]
+        target (Tensor): target masks of shape [B, H, W]
+        eps (float): smooth value
 
-    res = (2. * intersection + eps) / (torch.sum(iflat * iflat) + torch.sum(tflat * tflat) + eps)
+    Returns:
+        Tensor: Tensor with values of Dice coefficient. Tensor size: [B]
+    """
+    pred_inner = pred.view((pred.size(0), pred.size(1) * pred.size(2)))
+    target_inner = target.view((target.size(0), target.size(1) * target.size(2)))
 
+    intersection = (pred_inner * target_inner).sum(1)
+    return (2. * intersection + eps) / ((pred_inner * pred_inner).sum(1) + (target_inner * target_inner).sum(1) + eps)
+
+
+def jaccard(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tensor:
+    """
+    Calculate Jaccard coefficient
+
+    Args:
+        pred (Tensor): predicted masks of shape [B, H, W]
+        target (Tensor): target masks of shape [B, H, W]
+        eps (float): smooth value
+
+    Returns:
+        Tensor: Tensor with values of Jaccard coefficient. Tensor size: [B]
+    """
+    preds_inner = pred.view((pred.size(0), pred.size(1) * pred.size(2)))
+    trues_inner = target.view((target.size(0), target.size(1) * target.size(2)))
+
+    intersection = (preds_inner * trues_inner).sum(1)
+    return (intersection + eps) / ((preds_inner + trues_inner).sum(1) - intersection + eps)
+
+
+def _multiclass_metric(func: callable, pred, target, eps: float = 1e-7) -> Tensor:
+    res = torch.zeros((pred.shape[1], pred.shape[0]), dtype=pred.dtype)
+    for i, [p, t] in enumerate(_split_masks_by_classes(pred, target)):
+        res[i] = func(torch.squeeze(p, dim=1), torch.squeeze(t, dim=1), eps)
     return res
 
 
-def jaccard(preds: torch.Tensor, trues: torch.Tensor, eps: float = 1e-7):
-    preds_inner = preds.cpu().data.numpy().copy()
-    trues_inner = trues.cpu().data.numpy().copy()
+def multiclass_dice(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tensor:
+    """
+    Calculate Dice coefficient for multiclass case
 
-    preds_inner = np.reshape(preds_inner, (preds_inner.shape[0], preds_inner.size // preds_inner.shape[0]))
-    trues_inner = np.reshape(trues_inner, (trues_inner.shape[0], trues_inner.size // trues_inner.shape[0]))
-    intersection = (preds_inner * trues_inner).sum(1)
-    scores = (intersection + eps) / ((preds_inner + trues_inner).sum(1) - intersection + eps)
+    Args:
+        pred (Tensor): predicted masks of shape [B, C, H, W]
+        target (Tensor): target masks of shape [B, C, H, W]
+        eps (float): smooth value
 
-    return scores
-
-
-def multiclass_dice(pred: torch.Tensor, target: torch.Tensor, eps: float = 1e-7):
-    res, num = 0, 0
-    for p, t in split_masks_by_classes(pred, target):
-        res += dice(p, t, eps)
-        num += 1
-    return res / num
+    Returns:
+        Tensor: Tensor with values of Dice coefficient. Tensor size: [C, B]
+    """
+    return _multiclass_metric(dice, pred, target, eps)
 
 
-def multiclass_jaccard(pred: torch.Tensor, target: torch.Tensor, eps: float = 1e-7):
-    res, num = 0, 0
-    for p, t in split_masks_by_classes(pred, target):
-        res += jaccard(p, t, eps)
-        num += 1
-    return res / num
+def multiclass_jaccard(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tensor:
+    """
+    Calculate Jaccard coefficient for multiclass case
+
+    Args:
+        pred (Tensor): predicted masks of shape [B, C, H, W]
+        target (Tensor): target masks of shape [B, C, H, W]
+        eps (float): smooth value
+
+    Returns:
+        Tensor: Tensor with values of Jaccard coefficient. Tensor size: [C, B]
+    """
+    return _multiclass_metric(jaccard, pred, target, eps)
 
 
-class DiceMetric(AbstractMetric):
-    def __init__(self, activation: str = None):
-        super().__init__('dice')
-        self._activation = Activation(activation)
-
-    def calc(self, output: torch.Tensor, target: torch.Tensor) -> np.ndarray or float:
-        return multiclass_dice(self._activation(output), target)
-
-    @staticmethod
-    def min_val() -> float:
-        return 0
-
-    @staticmethod
-    def max_val() -> float:
-        return 1
-
-
-class JaccardMetric(AbstractMetric):
-    def __init__(self, activation: str = None):
-        super().__init__('jaccard')
-        self._activation = Activation(activation)
-
-    def calc(self, output: torch.Tensor, target: torch.Tensor) -> np.ndarray or float:
-        return multiclass_jaccard(self._activation(output), target)
-
-    @staticmethod
-    def min_val() -> float:
-        return 0
-
-    @staticmethod
-    def max_val() -> float:
-        return 1
-
-
-class ScalarMetric(AbstractMetric):
-    def __init__(self, name: str, param: torch.nn.Parameter):
+class _SegmentationMetric(AbstractMetric):
+    def __init__(self, name: str, func: callable, activation: str = None):
         super().__init__(name)
-        self.param = param
+        self._activation = Activation(activation)
+        self._func = func
 
-    def calc(self, output: torch.Tensor, target: torch.Tensor) -> np.ndarray or float:
-        return self.param.data
+    def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
+        return np.squeeze(self._func(self._activation(output), target).cpu().numpy())
+
+    @staticmethod
+    def min_val() -> float:
+        return 0
+
+    @staticmethod
+    def max_val() -> float:
+        return 1
+
+
+class MulticlassSegmentationMetric(_SegmentationMetric):
+    def __init__(self, name: str, func: callable, activation: str = None):
+        super().__init__(name, func, activation)
+
+    def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
+        res = np.squeeze(self._func(self._activation(output), target).cpu().numpy())
+        return res.sum(0) / res.shape[0]
+
+
+class DiceMetric(_SegmentationMetric):
+    def __init__(self, activation: str = None):
+        super().__init__('dice', dice, activation)
+
+
+class JaccardMetric(_SegmentationMetric):
+    def __init__(self, activation: str = None):
+        super().__init__('jaccard', jaccard, activation)
 
 
 class SegmentationMetricsProcessor(MetricsProcessor):
-    def __init__(self, stage_name: str):
+    def __init__(self, stage_name: str, activation: str = None):
         super().__init__()
-        self.add_metrics_group(MetricsGroup(stage_name).add(JaccardMetric(activation='sigmoid')).add(DiceMetric(activation='sigmoid')))
+        self.add_metrics_group(MetricsGroup(stage_name).add(JaccardMetric(activation)).add(DiceMetric(activation)))
+
+
+class MulticlassDiceMetric(MulticlassSegmentationMetric):
+    def __init__(self, activation: str = None):
+        super().__init__('dice', multiclass_dice, activation)
+
+
+class MulticlassJaccardMetric(MulticlassSegmentationMetric):
+    def __init__(self, activation: str = None):
+        super().__init__('jaccard', multiclass_jaccard, activation)
+
+
+class MulticlassSegmentationMetricsProcessor(MetricsProcessor):
+    def __init__(self, stage_name: str, activation: str = None):
+        super().__init__()
+        self.add_metrics_group(MetricsGroup(stage_name).add(MulticlassJaccardMetric(activation)).add(MulticlassDiceMetric(activation)))

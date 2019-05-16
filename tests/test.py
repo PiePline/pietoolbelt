@@ -1,6 +1,6 @@
 import unittest
 
-from metrics_tests import *
+from metrics import *
 
 
 if __name__ == '__main__':
