@@ -26,10 +26,11 @@ class PyTorchTest(unittest.TestCase):
         self.assertEqual(target.size(), torch.Size([2, 10, 10]))
 
         pred, target = torch.ones((2, 3, 10, 10)), torch.ones((2, 3, 10, 10))
-        pred[0, 0, :, :] = 0
+        pred[0, 0, :5, :] = 0
+        target[0, 0, :, :5] = 0
         val = multiclass_jaccard(pred, target)
         self.assertIsInstance(val, torch.Tensor)
-        self.assertTrue(torch.allclose(val, torch.tensor([[0, 1], [1, 1], [1, 1]], dtype=torch.float32)))
+        self.assertTrue(torch.allclose(val, torch.tensor([[1 / 3, 1], [1, 1], [1, 1]], dtype=torch.float32)))
         self.assertEqual(pred.size(), torch.Size([2, 3, 10, 10]))
         self.assertEqual(target.size(), torch.Size([2, 3, 10, 10]))
 
@@ -58,10 +59,11 @@ class PyTorchTest(unittest.TestCase):
         self.assertEqual(target.size(), torch.Size([2, 10, 10]))
 
         pred, target = torch.ones((2, 3, 10, 10)), torch.ones((2, 3, 10, 10))
-        pred[0, 0, :, :] = 0
+        pred[0, 0, :5, :] = 0
+        target[0, 0, :, :5] = 0
         val = multiclass_dice(pred, target)
         self.assertIsInstance(val, torch.Tensor)
-        self.assertTrue(torch.allclose(val, torch.tensor([[0, 1], [1, 1], [1, 1]], dtype=torch.float32)))
+        self.assertTrue(torch.allclose(val, torch.tensor([[0.5, 1], [1, 1], [1, 1]], dtype=torch.float32)))
         self.assertEqual(pred.size(), torch.Size([2, 3, 10, 10]))
         self.assertEqual(target.size(), torch.Size([2, 3, 10, 10]))
 

@@ -96,3 +96,18 @@ def multiclass_jaccard(pred: np.ndarray, target: np.ndarray, eps: float = 1e-7):
         np.ndarray: Array with values of Jaccard coefficient. Array shape: [C, B]
     """
     return _multiclass_metric(jaccard, pred, target, eps)
+
+
+def f_beta_score(pred: np.ndarray, target: np.ndarray, beta: int):
+    """
+    Calculate F-Beta score.
+
+    Args:
+        pred (np.ndarray): predicted masks of shape [B, H, W]
+        target (np.ndarray): target masks of shape [B, N, H, W]. There is N - number of instance masks
+        beta (int): value of Beta coefficient
+
+    Returns:
+        np.ndarray: array with values of F-Beta score. Array shape: [B]
+    """
+    raise NotImplementedError()

@@ -65,10 +65,10 @@ def jaccard(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tensor:
     return (intersection + eps) / ((preds_inner + trues_inner).sum(1) - intersection + eps)
 
 
-def _multiclass_metric(func: callable, pred, target, eps: float = 1e-7) -> Tensor:
+def _multiclass_metric(func: callable, pred, target) -> Tensor:
     res = torch.zeros((pred.shape[1], pred.shape[0]), dtype=pred.dtype)
     for i, [p, t] in enumerate(_split_masks_by_classes(pred, target)):
-        res[i] = func(torch.squeeze(p, dim=1), torch.squeeze(t, dim=1), eps)
+        res[i] = func(torch.squeeze(p, dim=1), torch.squeeze(t, dim=1))
     return res
 
 
@@ -84,7 +84,7 @@ def multiclass_dice(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tensor:
     Returns:
         Tensor: Tensor with values of Dice coefficient. Tensor size: [C, B]
     """
-    return _multiclass_metric(dice, pred, target, eps)
+    return _multiclass_metric(lambda out, tar: dice(out, tar, eps), pred, target)
 
 
 def multiclass_jaccard(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tensor:
@@ -99,7 +99,7 @@ def multiclass_jaccard(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tenso
     Returns:
         Tensor: Tensor with values of Jaccard coefficient. Tensor size: [C, B]
     """
-    return _multiclass_metric(jaccard, pred, target, eps)
+    return _multiclass_metric(lambda out, tar: jaccard(out, tar, eps), pred, target)
 
 
 class _SegmentationMetric(AbstractMetric):
@@ -121,12 +121,19 @@ class _SegmentationMetric(AbstractMetric):
 
 
 class MulticlassSegmentationMetric(_SegmentationMetric):
-    def __init__(self, name: str, func: callable, activation: str = None):
+    def __init__(self, name: str, func: callable, activation: str = None, reduction: str = 'sum'):
         super().__init__(name, func, activation)
+
+        if reduction == 'sum':
+            self._reduction = lambda x: x.sum(0) / x.shape(0)
+        elif reduction == 'mean':
+            self._reduction = lambda x: x.mean(0)
+        else:
+            raise Exception("Unexpected reduction '{}'. Possible values: [sum, mean]".format(reduction))
 
     def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
         res = np.squeeze(self._func(self._activation(output), target).cpu().numpy())
-        return res.sum(0) / res.shape[0]
+        return self._reduction(res.sum(0))
 
 
 class DiceMetric(_SegmentationMetric):
@@ -146,16 +153,17 @@ class SegmentationMetricsProcessor(MetricsProcessor):
 
 
 class MulticlassDiceMetric(MulticlassSegmentationMetric):
-    def __init__(self, activation: str = None):
-        super().__init__('dice', multiclass_dice, activation)
+    def __init__(self, activation: str = None, reduction: str = 'sum'):
+        super().__init__('dice', func=multiclass_dice, activation=activation, reduction=reduction)
 
 
 class MulticlassJaccardMetric(MulticlassSegmentationMetric):
-    def __init__(self, activation: str = None):
-        super().__init__('jaccard', multiclass_jaccard, activation)
+    def __init__(self, activation: str = None, reduction: str = 'sum'):
+        super().__init__('jaccard', func=multiclass_jaccard, activation=activation, reduction=reduction)
 
 
 class MulticlassSegmentationMetricsProcessor(MetricsProcessor):
-    def __init__(self, stage_name: str, activation: str = None):
+    def __init__(self, stage_name: str, activation: str = None, reduction: str = 'sum'):
         super().__init__()
-        self.add_metrics_group(MetricsGroup(stage_name).add(MulticlassJaccardMetric(activation)).add(MulticlassDiceMetric(activation)))
+        self.add_metrics_group(MetricsGroup(stage_name).add(MulticlassJaccardMetric(activation=activation, reduction=reduction))
+                                                       .add(MulticlassDiceMetric(activation=activation, reduction=reduction)))
