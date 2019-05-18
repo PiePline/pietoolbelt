@@ -19,13 +19,18 @@ class SegmentationLossesTest(unittest.TestCase):
         res = DiceLoss(eps=1e-7, activation=None)(pred, target)
         self.assertTrue(torch.allclose(true_val, 1 - res))
 
-    def test_multiclass_loss(self):
-        pred, target = torch.ones((2, 3, 10, 10)), torch.ones((2, 3, 10, 10))
+        pred[0, :5, :] = 0
+        target[0, :, :5] = 0
+        val = DiceLoss(eps=1e-7, activation=None)(pred, target)
+        self.assertTrue(torch.allclose(val, 1 - torch.tensor([0.5], dtype=torch.float32)))
 
-        true_val = multiclass_dice(pred, target, eps=1)
-        res = MulticlassSegmentationLoss(DiceLoss(eps=1, activation=None))(pred, target)
+    def test_multiclass_loss(self):
+        pred, target = torch.ones((2, 10, 10)), torch.ones((2, 10, 10))
+        true_val = dice(pred, target, eps=1e-7)
+        res = DiceLoss(eps=1e-7, activation=None)(pred, target)
         self.assertTrue(torch.allclose(true_val, 1 - res))
 
-        true_val = multiclass_dice(pred, target, eps=1e-7)
-        res = DiceLoss(eps=1e-7, activation=None)(pred, target)
+        pred, target = torch.ones((2, 3, 10, 10)), torch.ones((2, 3, 10, 10))
+        true_val = multiclass_dice(pred, target, eps=1)
+        res = MulticlassSegmentationLoss(DiceLoss(eps=1, activation=None))(pred, target)
         self.assertTrue(torch.allclose(true_val, 1 - res))

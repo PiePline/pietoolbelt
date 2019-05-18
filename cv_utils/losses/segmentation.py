@@ -3,7 +3,7 @@ from torch import Tensor
 from torch.nn import Module
 
 from cv_utils.losses.common import ComposedLoss
-from cv_utils.metrics.torch.segmentation import _split_masks_by_classes, dice
+from cv_utils.metrics.torch.segmentation import dice, _multiclass_metric
 from cv_utils.models.utils import Activation
 
 
@@ -54,7 +54,4 @@ class MulticlassSegmentationLoss(Module):
         self._base_loss = base_loss
 
     def forward(self, output, target):
-        overall_res = 0
-        for p, t in _split_masks_by_classes(output, target):
-            overall_res += self._base_loss(p, t)
-        return overall_res
+        return _multiclass_metric(self._base_loss, output, target)
