@@ -1,6 +1,8 @@
 import torch
 from torch.nn import Module
 
+__all__ = ['ComposedLoss', 'Reduction']
+
 
 class ComposedLoss(Module):
     def __init__(self, losses: [], coeffs: [] = None):
@@ -38,3 +40,18 @@ class ComposedLoss(Module):
             res += self._apply_weight(l(*args, **kwargs), c)
 
         return res
+
+
+class Reduction:
+    def __init__(self, method: str = 'sum'):
+        super().__init__()
+
+        if method == 'sum':
+            self._reduction = lambda x: x.sum(0)
+        elif method == 'mean':
+            self._reduction = lambda x: x.mean(0)
+        else:
+            raise Exception("Unexpected reduction '{}'. Possible values: [sum, mean]".format(method))
+
+    def __call__(self, data):
+        return self._reduction(data)

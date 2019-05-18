@@ -16,11 +16,11 @@ def _compute_boxes_iou(box: np.ndarray or [], boxes: np.ndarray or [], box_area:
     Note: the areas are passed in rather than calculated here for
           efficency. Calculate once in the caller to avoid duplicate work.
     """
-    y1 = np.maximum(box[0], boxes[:, :, 0])
-    x1 = np.maximum(box[1], boxes[:, :, 1])
-    x2 = np.minimum(box[2], boxes[:, :, 2])
-    y2 = np.minimum(box[3], boxes[:, :, 3])
-    intersection = np.maximum(x2 - x1, 1) * np.maximum(y2 - y1, 1)
+    xmin = np.maximum(box[0], boxes[:, :, 0])
+    ymin = np.maximum(box[1], boxes[:, :, 1])
+    xmax = np.minimum(box[2], boxes[:, :, 2])
+    ymax = np.minimum(box[3], boxes[:, :, 3])
+    intersection = (xmax - xmin) * (ymax - ymin)
     union = box_area + boxes_area[:] - intersection[:]
     iou = intersection / union
     return iou

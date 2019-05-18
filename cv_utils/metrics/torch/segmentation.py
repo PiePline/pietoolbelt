@@ -103,13 +103,14 @@ def multiclass_jaccard(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tenso
 
 
 class _SegmentationMetric(AbstractMetric):
-    def __init__(self, name: str, func: callable, activation: str = None):
+    def __init__(self, name: str, func: callable, activation: str = None, eps: float = 1e-7):
         super().__init__(name)
-        self._activation = Activation(activation)
         self._func = func
+        self._activation = Activation(activation)
+        self._eps = eps
 
     def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
-        return np.squeeze(self._func(self._activation(output), target).cpu().numpy())
+        return np.squeeze(self._func(self._activation(output), target, self._eps).cpu().numpy())
 
     @staticmethod
     def min_val() -> float:
@@ -121,11 +122,13 @@ class _SegmentationMetric(AbstractMetric):
 
 
 class MulticlassSegmentationMetric(_SegmentationMetric):
-    def __init__(self, name: str, func: callable, activation: str = None, reduction: str = 'sum'):
+    def __init__(self, name: str, func: callable, activation: str = None, reduction: str = None):
         super().__init__(name, func, activation)
 
-        if reduction == 'sum':
-            self._reduction = lambda x: x.sum(0) / x.shape(0)
+        if reduction is None:
+            self._reduction = lambda x: x
+        elif reduction == 'sum':
+            self._reduction = lambda x: x.sum(0)
         elif reduction == 'mean':
             self._reduction = lambda x: x.mean(0)
         else:
@@ -133,17 +136,17 @@ class MulticlassSegmentationMetric(_SegmentationMetric):
 
     def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
         res = np.squeeze(self._func(self._activation(output), target).cpu().numpy())
-        return self._reduction(res.sum(0))
+        return self._reduction(res)
 
 
 class DiceMetric(_SegmentationMetric):
-    def __init__(self, activation: str = None):
-        super().__init__('dice', dice, activation)
+    def __init__(self, activation: str = None, eps: float = 1e-7):
+        super().__init__('dice', dice, activation, eps)
 
 
 class JaccardMetric(_SegmentationMetric):
-    def __init__(self, activation: str = None):
-        super().__init__('jaccard', jaccard, activation)
+    def __init__(self, activation: str = None, eps: float = 1e-7):
+        super().__init__('jaccard', jaccard, activation, eps)
 
 
 class SegmentationMetricsProcessor(MetricsProcessor):
@@ -166,4 +169,4 @@ class MulticlassSegmentationMetricsProcessor(MetricsProcessor):
     def __init__(self, stage_name: str, activation: str = None, reduction: str = 'sum'):
         super().__init__()
         self.add_metrics_group(MetricsGroup(stage_name).add(MulticlassJaccardMetric(activation=activation, reduction=reduction))
-                                                       .add(MulticlassDiceMetric(activation=activation, reduction=reduction)))
+                               .add(MulticlassDiceMetric(activation=activation, reduction=reduction)))
