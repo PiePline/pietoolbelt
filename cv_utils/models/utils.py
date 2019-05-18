@@ -3,6 +3,9 @@ from torch.nn import Module
 
 
 class Activation(Module):
+    """
+    Activation layer with option
+    """
     def __init__(self, activation: str = None):
         super().__init__()
         self._activation = lambda x: x
