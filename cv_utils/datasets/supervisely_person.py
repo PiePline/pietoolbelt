@@ -6,7 +6,8 @@ import numpy as np
 import cv2
 from neural_pipeline import AbstractDataset
 
-from cv_utils.datasets.common import get_root_by_env, MasksComposer
+from cv_utils.datasets.common import get_root_by_env
+from cv_utils.mask_composer import MasksComposer
 
 __all__ = ['SuperviselyPersonDataset']
 

@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import cv2
+from abc import ABCMeta, abstractmethod
 
 
 def get_root_by_env(env_name: str) -> str:
@@ -9,71 +9,57 @@ def get_root_by_env(env_name: str) -> str:
     return os.environ['SUPERVISELY_DATASET']
 
 
-class MasksComposer:
-    def __init__(self, target_shape: [], dtype: np.typename = np.uint8):
-        self._masks = {}
-        self._mask_shape = target_shape
-        self._type = dtype
+class BasicDataset(metaclass=ABCMeta):
+    """
+    The standard dataset basic class.
 
-        self._borders_as_class = False
-        self._borders_between_classes = None
-        self._dilate_masks_kernel = None
+    Basic dataset get array of items and works with it. Array of items is just an array of shape [N, ?]
+    """
+    def __init__(self, items):
+        self._items = items
+        self._indices = None
 
-    def add_borders_as_class(self, between_classes: [] = None, dilate_masks_kernel: np.ndarray = np.ones((2, 2), dtype=np.uint8)) -> 'MasksComposer':
-        self._borders_as_class = True
-        self._borders_between_classes = between_classes
-        self._dilate_masks_kernel = dilate_masks_kernel
+    @abstractmethod
+    def _interpret_item(self, item) -> any:
+        """
+        Interpret one item from dataset. This method get index of item and returns interpreted data? that will be passed from dataset
 
-    def _calc_border_between_masks(self, mask1, mask2):
-        borders = np.zeros_like(mask1)
-        mask1_intern = cv2.dilate(mask1, self._dilate_masks_kernel)
-        mask2_intern = cv2.dilate(mask2, self._dilate_masks_kernel)
+        Args:
+            item: item of items array
 
-        add = mask1_intern + mask2_intern
-        borders[add > 1] = 1
-        return borders
+        Returns:
+            One item, that
+        """
 
-    def add_mask(self, mask: np.ndarray, cls, offset: np.ndarray = None):
-        if cls not in self._masks:
-            self._masks[cls] = np.zeros(self._mask_shape, dtype=self._type)
+    def get_items(self) -> []:
+        """
+        Get array of items
 
-        if self._borders_as_class and cls in self._borders_between_classes:
-            prev_borders = None
-            if offset is not None:
-                if isinstance(self._masks[cls], dict):
-                    target_mask = np.zeros_like(self._masks[cls]['mask'])
-                    prev_borders = self._masks[cls]['borders']
-                else:
-                    target_mask = np.zeros_like(self._masks[cls])
-                target_mask[offset[0]: offset[0] + mask.shape[0], offset[1]: offset[1] + mask.shape[1]] = mask
-            else:
-                target_mask = mask
+        :return: array of indices
+        """
+        return self._items
 
-            origin_mask = self._masks[cls] if not isinstance(self._masks[cls], dict) else self._masks[cls]['mask']
-            borders = self._calc_border_between_masks(origin_mask, target_mask)
-
-            if prev_borders is not None:
-                borders += prev_borders
-
-            origin_mask += target_mask
-            self._masks[cls] = {'mask': np.clip(origin_mask, 0, 1), 'borders': np.clip(borders, 0, 1)}
+    def set_indices(self, indices: [int], remove_unused: bool = False):
+        if remove_unused:
+            self._items = [self._items[idx] for idx in indices]
+            self._indices = None
         else:
-            if offset is not None:
-                self._masks[cls][offset[0]: offset[0] + mask.shape[0], offset[1]: offset[1] + mask.shape[1]] += mask
-            else:
-                self._masks[cls] += mask
+            self._indices = indices
 
-    def compose(self) -> np.ndarray:
-        res = None
-        for cls, mask in self._masks.items():
-            if res is None:
-                if isinstance(mask, dict):
-                    res = np.stack((mask['mask'], mask['borders']), axis=2)
-                else:
-                    res = mask
-            else:
-                if isinstance(mask, dict):
-                    res = np.stack((res, mask['mask'], mask['borders']), axis=2)
-                else:
-                    res = np.stack((res, mask), axis=0)
-        return res
+    def get_indices(self) -> []:
+        return self._indices
+
+    def load_indices(self, path: str, remove_unused: bool = False):
+        self.set_indices(np.load(path), remove_unused)
+
+    def flush_indices(self, path: str):
+        np.save(path, self._indices)
+
+    def __getitem__(self, idx):
+        if self._indices is None:
+            return self._interpret_item(self._items[idx])
+        else:
+            return self._interpret_item(self._items[self._indices[idx]])
+
+    def __len__(self):
+        return len(self._items)
