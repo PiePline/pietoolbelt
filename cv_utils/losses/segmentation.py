@@ -15,7 +15,7 @@ class DiceLoss(Module):
         eps (float): smooth value. When eps == 1 it's named Smooth Dice loss
         activation (srt): the activation function, that applied to predicted values. See :class:`Activation` for possible values
     """
-    def __init__(self, eps: float = 1, activation: str = None, reduction: Reduction = Reduction('sum')):
+    def __init__(self, eps: float = 1, activation: str = None, reduction: Reduction = Reduction('mean')):
         super().__init__()
         self._activation = Activation(activation)
         self._reduction = reduction
@@ -35,7 +35,7 @@ class BCEDiceLoss(ComposedLoss):
         eps (float): smooth value. When eps == 1 it's named Smooth Dice loss
         activation (srt): the activation function, that applied to predicted values. See :class:`Activation` for possible values
     """
-    def __init__(self, bce_w: float, dice_w: float, eps: float = 1, activation: str = None, reduction: Reduction = None):
+    def __init__(self, bce_w: float, dice_w: float, eps: float = 1, activation: str = None, reduction: Reduction = Reduction('mean')):
         bce_loss = torch.nn.BCEWithLogitsLoss()
         dice_loss = DiceLoss(eps=eps, activation=activation, reduction=reduction)
 

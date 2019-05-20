@@ -135,7 +135,7 @@ class MulticlassSegmentationMetric(_SegmentationMetric):
             raise Exception("Unexpected reduction '{}'. Possible values: [sum, mean]".format(reduction))
 
     def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
-        res = np.squeeze(self._func(self._activation(output), target).cpu().numpy())
+        res = np.squeeze(self._func(self._activation(output), target).data.cpu().numpy())
         return self._reduction(res)
 
 
