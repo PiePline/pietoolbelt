@@ -1,6 +1,6 @@
 import numpy as np
 
-__all__ = ['dice', 'jaccard', 'multiclass_dice', 'multiclass_jaccard']
+__all__ = ['dice', 'jaccard', 'multiclass_dice', 'multiclass_jaccard', 'pixelwise_f_beta_score']
 
 
 def _split_masks_by_classes(pred: np.ndarray, target: np.ndarray) -> []:
@@ -111,3 +111,17 @@ def f_beta_score(pred: np.ndarray, target: np.ndarray, beta: int):
         np.ndarray: array with values of F-Beta score. Array shape: [B]
     """
     raise NotImplementedError()
+
+
+def pixelwise_f_beta_score(pred: np.ndarray, target: np.ndarray, beta: int, threshold_shift: float = 0):
+    y_pred_bin = np.round(pred + threshold_shift)
+
+    tp = np.sum(np.round(target * y_pred_bin)) + 1e-7
+    fp = np.sum(np.round(np.clip(y_pred_bin - target, 0, 1)))
+    fn = np.sum(np.round(np.clip(target - pred, 0, 1)))
+
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+
+    beta_squared = beta ** 2
+    return (beta_squared + 1) * (precision * recall) / (beta_squared * precision + recall + 1e-7)

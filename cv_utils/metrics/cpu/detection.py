@@ -37,18 +37,27 @@ def f_beta_score(pred: np.ndarray, target: np.ndarray, beta: int, thresholds: [f
         pred (np.ndarray): predicted bboxes of shape [B, N, 4]
         target (np.ndarray): target bboxes of shape [B, N, 4]
         beta (int): value of Beta coefficient
+        thresholds ([float]): list of thresholds
         There is N - number of instance masks
 
     Returns:
         np.ndarray: array with values of F-Beta score. Array shape: [B]
     """
-    ious = []
     for batch_idx in range(pred.shape[0]):
-        pred_areas = calc_boxes_areas(pred[batch_idx])  # [N], [N]
-        target_areas = calc_boxes_areas(target[batch_idx])  # [N], [N]
-        for instance_idx in range(pred.shape[1]):
-            ious.append(_compute_boxes_iou(pred[batch_idx][instance_idx], target[batch_idx], pred_areas[instance_idx], target_areas))
-
         for thresh in thresholds:
-            pass
+            tp, fp, fn = 0, 0, 0
+            pred_areas = calc_boxes_areas(pred[batch_idx])  # [N], [N]
+            target_areas = calc_boxes_areas(target[batch_idx])  # [N], [N]
+            ious = []
+            for instance_idx in range(pred.shape[1]):
+                ious.append(_compute_boxes_iou(pred[batch_idx][instance_idx], target[batch_idx], pred_areas[instance_idx], target_areas))
+
+            confusion_matrix = np.array(ious)
+            matched_num = np.clip(iou[iou >= thresh], 0, 1).sum()
+
+            if matched_num > 1:
+                tp += 1
+            else:
+                fn += 1
+
     raise NotImplementedError()

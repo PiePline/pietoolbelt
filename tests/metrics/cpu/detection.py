@@ -21,3 +21,4 @@ class CPUTest(unittest.TestCase):
         target = np.array([[[1, 1, 2, 2], [3, 3, 5, 5]], [[1, 3, 2, 5], [-1, -3, 2, 5]]]) - np.array([1, 1, 1, 1])
 
         res = f_beta_score(preds, target, beta=2, thresholds=[0.5, 0.9])
+        print('a')
