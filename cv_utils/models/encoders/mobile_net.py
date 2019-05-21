@@ -3,6 +3,8 @@ from cv_utils.models.encoders.common import BasicEncoder
 import torch.nn as nn
 import math
 
+__all__ = ['MobileNetV2Encoder']
+
 
 def conv_bn(in_channels: int, out_channels: int, stride):
     return nn.Sequential(
@@ -65,12 +67,13 @@ class MobileNetV2Encoder(BasicEncoder):
     """
     MobileNet-V2 encoder
 
-    This model get tensor of size [B, C, 32 * i, 32 * 1], where i = 2, 3, 4, ... and produce tesor of size [B, 1280 * width_mult, i, i]
+    This model get tensor of size `[B, C, 32 * i, 32 * j]`, where i, j = 2, 3, 4, ... and produce tesor of size `[B, 1280 * width_mult, i, j]`
 
     Args:
         input_channels (int): number of channels for input image
         width_mult (float): output tensor width coefficient
     """
+
     def __init__(self, input_channels: int = 3, width_mult=1.):
         super().__init__()
         block = InvertedResidual
@@ -106,7 +109,7 @@ class MobileNetV2Encoder(BasicEncoder):
 
         self._initialize_weights()
 
-    def forward(self, x):
+    def _forward(self, x):
         x = self._process_layer_output(self.conv1(x))
 
         x = self._process_layer_output(self.layer1_1(x))

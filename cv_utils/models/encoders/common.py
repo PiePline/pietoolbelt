@@ -4,6 +4,7 @@ from torch.nn import Module
 from torch import Tensor
 
 
+
 class BasicEncoder(Module, metaclass=ABCMeta):
     def __init__(self):
         super().__init__()
@@ -32,3 +33,18 @@ class BasicEncoder(Module, metaclass=ABCMeta):
         :return: list of encoder alyers
         """
         return self._layers_outputs
+
+    def forward(self, *input):
+        if self._collect_layers_outputs:
+            self._layers_outputs = []
+
+        return self._forward(*input)
+
+    @abstractmethod
+    def _forward(self, *input):
+        """
+        Internal method for inline to __forward__
+
+        :param input: input data
+        :return: result of network forward pass
+        """

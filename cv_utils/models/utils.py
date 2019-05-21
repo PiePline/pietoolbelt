@@ -6,6 +6,7 @@ class Activation(Module):
     """
     Activation layer with option
     """
+
     def __init__(self, activation: str = None):
         super().__init__()
         self._activation = lambda x: x
@@ -28,3 +29,7 @@ class ModelWithActivation(Module):
     def forward(self, data):
         res = self._base_model(data)
         return self._activation(res)
+
+
+def calc_model_params_num(model: Module):
+    return sum(p.numel() for p in model.parameters())
