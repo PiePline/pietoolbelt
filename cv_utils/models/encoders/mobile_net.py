@@ -71,7 +71,7 @@ class MobileNetV2Encoder(BasicEncoder):
 
     Args:
         input_channels (int): number of channels for input image
-        width_mult (float): output tensor width coefficient
+        width_mult (float): output tensor width coefficient. Min val: 0.0625
     """
 
     def __init__(self, input_channels: int = 3, width_mult=1.):
