@@ -7,3 +7,4 @@ from . import models
 from . import img_matcher
 from . import viz
 from . import mask_composer
+from . import torch_utils

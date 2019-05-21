@@ -1,38 +1,39 @@
 import unittest
-import numpy as np
+import torch
+from torch import Tensor
 
-from cv_utils.metrics.cpu.detection import _calc_boxes_areas, _compute_boxes_iou, f_beta_score, calc_tp_fp_fn
+from cv_utils.metrics.torch.detection import _calc_boxes_areas, _compute_boxes_iou, f_beta_score, calc_tp_fp_fn
 
-__all__ = ['CPUTest']
+__all__ = ['PyTorchTest']
 
 
-class CPUTest(unittest.TestCase):
+class PyTorchTest(unittest.TestCase):
     def test_calc_boxes_areas(self):
-        boxes = np.array([[1, 1, 2, 2], [3, 3, 5, 5], [1, 3, 2, 5], [-1, -3, 2, 5]])
+        boxes = torch.FloatTensor([[1, 1, 2, 2], [3, 3, 5, 5], [1, 3, 2, 5], [-1, -3, 2, 5]])
         res = _calc_boxes_areas(boxes)
-        self.assertIsInstance(res, np.ndarray)
-        self.assertTrue(np.allclose(res, [1, 4, 2, 24]))
+        self.assertIsInstance(res, Tensor)
+        self.assertTrue(torch.allclose(res, torch.FloatTensor([1, 4, 2, 24])))
 
     def test_boxex_iou(self):
-        pred = np.array([[0, 1, 3, 3]])
-        target = np.array([[1, 1, 2, 2], [3, 3, 5, 5], [1, 3, 2, 5], [-1, -3, 2, 5]])
+        pred = torch.FloatTensor([[0, 1, 3, 3]])
+        target = torch.FloatTensor([[1, 1, 2, 2], [3, 3, 5, 5], [1, 3, 2, 5], [-1, -3, 2, 5]])
         pred_areas = _calc_boxes_areas(pred)
         target_areas = _calc_boxes_areas(target)
         res = _compute_boxes_iou(pred[0], target, pred_areas[0], target_areas)
-        self.assertTrue(np.allclose(res, [1 / 6, 0, 0, 4 / 26]))
+        self.assertTrue(torch.allclose(res, torch.FloatTensor([1 / 6, 0, 0, 4 / 26])))
 
-        pred = np.array([[3, 0, 5, 2], [3.5, 3.5, 5.5, 5.5]])
-        target = np.array([[0, 0, 2, 2], [3, 3, 5, 5]])
+        pred = torch.FloatTensor([[3, 0, 5, 2], [3.5, 3.5, 5.5, 5.5]])
+        target = torch.FloatTensor([[0, 0, 2, 2], [3, 3, 5, 5]])
         pred_areas = _calc_boxes_areas(pred)
         target_areas = _calc_boxes_areas(target)
         res = _compute_boxes_iou(pred[0], target, pred_areas[0], target_areas)
-        self.assertTrue(np.allclose(res, [0, 0]))
+        self.assertTrue(torch.allclose(res, torch.FloatTensor([0, 0])))
         res = _compute_boxes_iou(pred[1], target, pred_areas[0], target_areas)
-        self.assertTrue(np.allclose(res, [0, 2.25 / 5.75]))
+        self.assertTrue(torch.allclose(res, torch.FloatTensor([0, 2.25 / 5.75])))
 
     def test_tp_fp_fn(self):
-        preds = np.array([[3, 0, 5, 2], [3.5, 3.5, 5.5, 5.5]])
-        target = np.array([[0, 0, 2, 2], [3, 3, 5, 5]])
+        preds = torch.FloatTensor([[3, 0, 5, 2], [3.5, 3.5, 5.5, 5.5]])
+        target = torch.FloatTensor([[0, 0, 2, 2], [3, 3, 5, 5]])
         tp, fp, fn = 1, 1, 1
 
         res = calc_tp_fp_fn(preds, target, threshold=0.1)
@@ -45,8 +46,8 @@ class CPUTest(unittest.TestCase):
         self.assertEqual(res, (0, 2, 2))
 
     def test_f_beta(self):
-        preds = np.array([[[3, 0, 5, 2], [3.5, 3.5, 5.5, 5.5]]])
-        target = np.array([[[0, 0, 2, 2], [3, 3, 5, 5]]])
+        preds = torch.FloatTensor([[[3, 0, 5, 2], [3.5, 3.5, 5.5, 5.5]]])
+        target = torch.FloatTensor([[[0, 0, 2, 2], [3, 3, 5, 5]]])
 
         beta = 1
         tp, fp, fn = 1, 1, 1
