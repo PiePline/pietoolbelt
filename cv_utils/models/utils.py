@@ -1,5 +1,8 @@
 import torch
+from torch import nn
 from torch.nn import Module
+
+__all__ = ['ClassificationModel', 'ModelWithActivation', 'Activation', 'calc_model_params_num']
 
 
 class Activation(Module):
@@ -33,3 +36,14 @@ class ModelWithActivation(Module):
 
 def calc_model_params_num(model: Module):
     return sum(p.numel() for p in model.parameters())
+
+
+class ClassificationModel(Module):
+    def __init__(self, encoder: Module, in_features: int, classes_num: int):
+        super().__init__()
+        self._encoder = encoder
+        self.fc = nn.Linear(in_features, classes_num)
+
+    def forward(self, data):
+        data = self._encoder(data)
+        return self.fc(data)
