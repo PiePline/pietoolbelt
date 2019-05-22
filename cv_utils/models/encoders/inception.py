@@ -14,7 +14,7 @@ class InceptionV3Encoder(BasicEncoder):
     """
     Inception V3 encoder.
 
-    This model get input of size [B, C, 192 + 32*i, 192 + 32*j] and output tensor of size [B, 2048, 1, 1]
+    This model get input of size [B, C, 64 + 32*i, 64 + 32*j] and output tensor of size [B, 2048, i, j], where i, j = 2, 3, 4, ...
 
     Args:
         input_channels (int): number of input channels (C)
@@ -104,9 +104,6 @@ class InceptionV3Encoder(BasicEncoder):
         x = self.Mixed_7c(x)  # 8 x 8 x 2048
         x = self._process_layer_output(x)
 
-        x = F.avg_pool2d(x, kernel_size=8)  # 8 x 8 x 2048
-
-        x = F.dropout(x, training=self.training)  # 1 x 1 x 2048
         return x
 
     def enable_aux_logits(self, num_classes: int) -> 'InceptionV3Encoder':

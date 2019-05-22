@@ -4,7 +4,6 @@ from torch.nn import Module
 from torch import Tensor
 
 
-
 class BasicEncoder(Module, metaclass=ABCMeta):
     def __init__(self):
         super().__init__()
@@ -24,7 +23,7 @@ class BasicEncoder(Module, metaclass=ABCMeta):
              object of output
         """
         if self._collect_layers_outputs:
-            self._layers_outputs.append(output)
+            self._layers_outputs.append(output.clone())
         return output
 
     def get_layers_outputs(self) -> []:

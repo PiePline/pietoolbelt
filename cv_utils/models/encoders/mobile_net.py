@@ -67,14 +67,13 @@ class MobileNetV2Encoder(BasicEncoder):
     """
     MobileNet-V2 encoder
 
-    This model get tensor of size `[B, C, 32 * i, 32 * j]`, where i, j = 2, 3, 4, ... and produce tesor of size `[B, 1280 * width_mult, i, j]`
+    This model get tensor of size `[B, C, 32 * i, 32 * j]`, where i, j = 2, 3, 4, ... and produce tensor of size `[B, 1280 * width_mult, i, j]`
 
     Args:
-        input_channels (int): number of channels for input image
+        in_channels (int): number of channels for input image
         width_mult (float): output tensor width coefficient. Min val: 0.0625
     """
-
-    def __init__(self, input_channels: int = 3, width_mult=1.):
+    def __init__(self, in_channels: int = 3, width_mult=1.):
         super().__init__()
         block = InvertedResidual
         input_channel = 32
@@ -94,7 +93,7 @@ class MobileNetV2Encoder(BasicEncoder):
         input_channel = int(input_channel * width_mult)
         last_channel = int(last_channel * width_mult) if width_mult > 1.0 else last_channel
 
-        self.conv1 = conv_bn(input_channels, input_channel, 2)
+        self.conv1 = conv_bn(in_channels, input_channel, 2)
 
         # building inverted residual blocks
         for layer_id, [t, c, n, s] in enumerate(interverted_residual_setting):
