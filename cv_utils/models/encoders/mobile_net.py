@@ -109,7 +109,7 @@ class MobileNetV2Encoder(BasicEncoder):
         self._initialize_weights()
 
     def _forward(self, x):
-        x = self._process_layer_output(self.conv1(x))
+        x = self.conv1(x)
 
         x = self._process_layer_output(self.layer1_1(x))
 

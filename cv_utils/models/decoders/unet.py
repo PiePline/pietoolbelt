@@ -37,12 +37,12 @@ class UNetDecoder(Module):
         self._encoder = encoder
         self._encoder.collect_layers_outputs(True)
 
-        encoder_res = self._encoder(torch.rand(1, list(self._encoder.modules())[1].weight.size(1), 128, 128))
+        encoder_res = self._encoder(torch.rand(1, list(self._encoder.parameters())[0].size(1), 128, 128))
         encoder_res = [encoder_res] + self._encoder.get_layers_outputs()
 
         filters = [r.size(1) for r in encoder_res]
+        filters = filters[1:] + filters[:1]
 
-        # filters = [64, 64, 128, 1024, 2048]
         self.bottlenecks = nn.ModuleList([ConvBottleneck(f * 2, f) for f in reversed(filters[:-1])])
         self.decoder_stages = nn.ModuleList([UnetDecoderBlock(filters[idx], filters[max(idx - 1, 0)]) for idx in range(1, len(filters))])
 

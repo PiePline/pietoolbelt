@@ -8,7 +8,7 @@ from cv_utils.models.encoders.inception import InceptionV3Encoder
 from cv_utils.models.encoders.mobile_net import MobileNetV2Encoder
 from cv_utils.models.encoders.resnet import resnet18, resnet34, resnet50, resnet101, resnet152
 
-__all__ = ['ResNet18EncoderTest']
+__all__ = ['ResNet18DecoderTest', 'ResNet34DecoderTest', 'ResNet50DecoderTest', 'ResNet101DecoderTest', 'ResNet152DecoderTest']
 
 
 class BasicUnetTest(unittest.TestCase):
@@ -62,9 +62,9 @@ class BasicUnetTest(unittest.TestCase):
     #     os.remove('test_onnx.onnx')
 
 
-class ResNet18EncoderTest(BasicUnetTest):
+class ResNet18DecoderTest(BasicUnetTest):
     _min_img_size = 64
-    _name = "ResNet18Encoder"
+    _name = "ResNet18Decoder"
     _layers_num = 5
 
     def _init_unet(self, in_channels: int):
@@ -75,9 +75,9 @@ class ResNet18EncoderTest(BasicUnetTest):
         return torch.Size([batch_size, 1, img_size_x, img_size_y])
 
 
-class ResNet34EncoderTest(BasicUnetTest):
+class ResNet34DecoderTest(BasicUnetTest):
     _min_img_size = 64
-    _name = "ResNet18Encoder"
+    _name = "ResNet18Decoder"
     _layers_num = 5
 
     def _init_unet(self, in_channels: int):
@@ -88,13 +88,52 @@ class ResNet34EncoderTest(BasicUnetTest):
         return torch.Size([batch_size, 1, img_size_x, img_size_y])
 
 
-class ResNet50EncoderTest(BasicUnetTest):
+class ResNet50DecoderTest(BasicUnetTest):
     _min_img_size = 64
-    _name = "ResNet18Encoder"
+    _name = "ResNet18Decoder"
     _layers_num = 5
 
     def _init_unet(self, in_channels: int):
         return UNetDecoder(resnet50(in_channels), classes_num=1)
+
+    @staticmethod
+    def _get_out_size_by_input_size(batch_size, in_channels, img_size_x, img_size_y):
+        return torch.Size([batch_size, 1, img_size_x, img_size_y])
+
+
+class ResNet101DecoderTest(BasicUnetTest):
+    _min_img_size = 64
+    _name = "ResNet101Decoder"
+    _layers_num = 5
+
+    def _init_unet(self, in_channels: int):
+        return UNetDecoder(resnet101(in_channels), classes_num=1)
+
+    @staticmethod
+    def _get_out_size_by_input_size(batch_size, in_channels, img_size_x, img_size_y):
+        return torch.Size([batch_size, 1, img_size_x, img_size_y])
+
+
+class ResNet152DecoderTest(BasicUnetTest):
+    _min_img_size = 64
+    _name = "ResNet152Decoder"
+    _layers_num = 5
+
+    def _init_unet(self, in_channels: int):
+        return UNetDecoder(resnet152(in_channels), classes_num=1)
+
+    @staticmethod
+    def _get_out_size_by_input_size(batch_size, in_channels, img_size_x, img_size_y):
+        return torch.Size([batch_size, 1, img_size_x, img_size_y])
+
+
+class MobileNetV2DecoderTest(BasicUnetTest):
+    _min_img_size = 64
+    _name = "MobileNetV2Encoder"
+    _layers_num = 6
+
+    def _init_unet(self, in_channels: int):
+        return UNetDecoder(MobileNetV2Encoder(in_channels), classes_num=1)
 
     @staticmethod
     def _get_out_size_by_input_size(batch_size, in_channels, img_size_x, img_size_y):
