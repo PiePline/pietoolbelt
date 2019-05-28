@@ -14,15 +14,16 @@ class ConvBottleneck(nn.Module):
         )
 
     def forward(self, dec, enc):
+        print(dec.size(), enc.size())
         x = torch.cat([dec, enc], dim=1)
         return self.seq(x)
 
 
-class UnetDecoderBlock(nn.Module):
-    def __init__(self, in_channels, out_channels):
+class UNetDecoderBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size: int, stride: int, padding: int):
         super().__init__()
         self.layer = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 3, padding=1),
+            nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding=padding),
             nn.ReLU(inplace=True)
         )
 
@@ -37,26 +38,26 @@ class UNetDecoder(Module):
         self._encoder = encoder
         self._encoder.collect_layers_outputs(True)
 
-        encoder_res = self._encoder(torch.rand(1, list(self._encoder.parameters())[0].size(1), 128, 128))
-        encoder_res = [encoder_res] + self._encoder.get_layers_outputs()
+        filters = encoder.get_layers_params()
 
-        filters = [r.size(1) for r in encoder_res]
-        filters = filters[1:] + filters[:1]
+        decoder_stages = []
+        for idx in range(1, len(filters)):
+            decoder_stages.append(UNetDecoderBlock(filters[idx]['filter_size'], filters[max(idx - 1, 0)]['filter_size'], filters[idx]['kernel_size'], filters[idx]['stride'], filters[idx]['stride']))
+        self.decoder_stages = nn.ModuleList(decoder_stages)
 
-        self.bottlenecks = nn.ModuleList([ConvBottleneck(f * 2, f) for f in reversed(filters[:-1])])
-        self.decoder_stages = nn.ModuleList([UnetDecoderBlock(filters[idx], filters[max(idx - 1, 0)]) for idx in range(1, len(filters))])
+        self.bottlenecks = nn.ModuleList([ConvBottleneck(f['filter_size'] * 2, f['filter_size']) for f in reversed(filters[:-1])])
 
-        self.last_upsample = UnetDecoderBlock(filters[0], filters[0])
-        self.final = nn.Conv2d(filters[0], classes_num, 3, padding=1)
+        self.last_upsample = UNetDecoderBlock(filters[0]['filter_size'], filters[0]['filter_size'], filters[0]['kernel_size'], filters[0]['stride'], filters[0]['padding'])
+        self.final = nn.Conv2d(filters[0]['filter_size'], classes_num, 3, padding=1)
 
     def forward(self, data):
         x = self._encoder(data)
-        encoder_outputs = [x] + self._encoder.get_layers_outputs()
+        encoder_outputs = self._encoder.get_layers_outputs() + [x]
 
         for idx, bottleneck in enumerate(self.bottlenecks):
             rev_idx = - (idx + 1)
             x = self.decoder_stages[rev_idx](x)
-            x = bottleneck(x, encoder_outputs[rev_idx])
+            x = bottleneck(x, encoder_outputs[rev_idx - 1])
 
         x = self.last_upsample(x)
         f = self.final(x)

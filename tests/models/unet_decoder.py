@@ -29,7 +29,7 @@ class BasicUnetTest(unittest.TestCase):
     def test_pass_data(self):
         for in_channels in [1, 3]:
             for batch_size in [1, 3]:
-                for img_size in [self._min_img_size + 64 * i for i in range(3)]:
+                for img_size in [self._min_img_size + 64 * i for i in range(1, 3)]:
                     with self.subTest(in_channels=in_channels, batch_size=batch_size, img_size=img_size):
                         try:
                             encoder = self._init_unet(in_channels=in_channels)

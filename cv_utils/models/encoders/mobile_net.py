@@ -79,7 +79,7 @@ class MobileNetV2Encoder(BasicEncoder):
         input_channel = 32
         last_channel = 1280
         interverted_residual_setting = [
-            # t, output_channels, blocks_num, stride
+            # expand_ratio, output_channels, blocks_num, stride
             [1, 16, 1, 1],  # 1
             [6, 24, 2, 2],  # 2
             [6, 32, 3, 2],  # 3
@@ -147,3 +147,26 @@ class MobileNetV2Encoder(BasicEncoder):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
+
+    @staticmethod
+    def get_min_input_size() -> []:
+        return [1, 1, 64, 64]
+
+    @staticmethod
+    def get_layers_params() -> []:
+        # return [{'filter_size': 16, 'kernel_size': 3, 'stride': 1},
+        #         {'filter_size': 24, 'kernel_size': 3, 'stride': 2},
+        #         {'filter_size': 32, 'kernel_size': 3, 'stride': 1},
+        #         {'filter_size': 64, 'kernel_size': 3, 'stride': 2},
+        #         {'filter_size': 96, 'kernel_size': 7, 'stride': 2},
+        #         {'filter_size': 160, 'kernel_size': 3, 'stride': 2},
+        #         {'filter_size': 320, 'kernel_size': 5, 'stride': 1},
+        #         {'filter_size': 1280, 'kernel_size': 5, 'stride': 1}]
+        return [{'filter_size': 16, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                {'filter_size': 24, 'kernel_size': 3, 'stride': 2, 'padding': 1},
+                {'filter_size': 32, 'kernel_size': 3, 'stride': 1, 'padding': 2},
+                {'filter_size': 64, 'kernel_size': 3, 'stride': 1, 'padding': 2},
+                {'filter_size': 96, 'kernel_size': 5, 'stride': 2, 'padding': 1},
+                {'filter_size': 160, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                {'filter_size': 320, 'kernel_size': 5, 'stride': 2, 'padding': 0},
+                {'filter_size': 1280, 'kernel_size': 5, 'stride': 2, 'padding': 0}]
