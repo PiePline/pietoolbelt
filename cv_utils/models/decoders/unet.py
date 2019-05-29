@@ -14,7 +14,6 @@ class ConvBottleneck(nn.Module):
         )
 
     def forward(self, dec, enc):
-        print(dec.size(), enc.size())
         x = torch.cat([dec, enc], dim=1)
         return self.seq(x)
 
@@ -38,17 +37,17 @@ class UNetDecoder(Module):
         self._encoder = encoder
         self._encoder.collect_layers_outputs(True)
 
-        filters = encoder.get_layers_params()
+        params = encoder.get_layers_params()
 
         decoder_stages = []
-        for idx in range(1, len(filters)):
-            decoder_stages.append(UNetDecoderBlock(filters[idx]['filter_size'], filters[max(idx - 1, 0)]['filter_size'], filters[idx]['kernel_size'], filters[idx]['stride'], filters[idx]['stride']))
+        for idx, param in enumerate(params):
+            decoder_stages.append(UNetDecoderBlock(param['filter_size'], params[max(idx - 1, 0)]['filter_size'], param['kernel_size'], param['stride'], param['stride']))
         self.decoder_stages = nn.ModuleList(decoder_stages)
 
-        self.bottlenecks = nn.ModuleList([ConvBottleneck(f['filter_size'] * 2, f['filter_size']) for f in reversed(filters[:-1])])
+        self.bottlenecks = nn.ModuleList([ConvBottleneck(p['filter_size'] * 2, p['filter_size']) for p in reversed(params[:-1])])
 
-        self.last_upsample = UNetDecoderBlock(filters[0]['filter_size'], filters[0]['filter_size'], filters[0]['kernel_size'], filters[0]['stride'], filters[0]['padding'])
-        self.final = nn.Conv2d(filters[0]['filter_size'], classes_num, 3, padding=1)
+        self.last_upsample = UNetDecoderBlock(params[0]['filter_size'], params[0]['filter_size'], params[0]['kernel_size'], params[0]['stride'], params[0]['padding'])
+        self.final = nn.Conv2d(params[0]['filter_size'], classes_num, 3, padding=1)
 
     def forward(self, data):
         x = self._encoder(data)

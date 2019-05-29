@@ -74,7 +74,7 @@ class MobileNetV2EncoderTest(BasicEncoderTest):
     # _init_encoder = lambda in_channels: MobileNetV2Encoder(in_channels)
     _min_img_size = 64
     _name = "MobileNetV2Encoder"
-    _layers_num = 8
+    _layers_num = 7
 
     def _init_encoder(self, in_channels: int):
         return MobileNetV2Encoder(in_channels)
@@ -87,7 +87,7 @@ class MobileNetV2EncoderTest(BasicEncoderTest):
 class InceptionV3EncoderTest(BasicEncoderTest):
     _min_img_size = 128
     _name = "InceptionV3Encoder"
-    _layers_num = 12
+    _layers_num = 11
 
     def _init_encoder(self, in_channels: int):
         return InceptionV3Encoder(in_channels)

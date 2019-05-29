@@ -19,6 +19,7 @@ class InceptionV3Encoder(BasicEncoder):
     Args:
         input_channels (int): number of input channels (C)
     """
+
     def __init__(self, input_channels: int = 3):
         super().__init__()
         self.Conv2d_1a_3x3 = BasicConv2d(input_channels, 32, kernel_size=3, stride=2)
@@ -57,6 +58,8 @@ class InceptionV3Encoder(BasicEncoder):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
+
+        self._init_layers_params()
 
     def _forward(self, x):
         x = self.Conv2d_1a_3x3(x)  # 299 x 299 x 3
@@ -102,7 +105,6 @@ class InceptionV3Encoder(BasicEncoder):
         x = self._process_layer_output(x)
 
         x = self.Mixed_7c(x)  # 8 x 8 x 2048
-        x = self._process_layer_output(x)
 
         return x
 
@@ -112,6 +114,21 @@ class InceptionV3Encoder(BasicEncoder):
 
     def get_logits(self) -> Tensor:
         return self.AuxLogits
+
+    def get_layers_params(self) -> []:
+        return self._layers_params
+
+    def _init_layers_params(self):
+        self._layers_params = [{'filter_size': 64, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 64, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 128, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 256, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 512, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 512, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 512, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 512, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 512, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 512, 'kernel_size': 3, 'stride': 1, 'padding': 1}]
 
 
 class InceptionA(nn.Module):

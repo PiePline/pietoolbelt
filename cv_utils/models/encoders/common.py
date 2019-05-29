@@ -47,3 +47,11 @@ class BasicEncoder(Module, metaclass=ABCMeta):
         :param input: input data
         :return: result of network forward pass
         """
+
+    @abstractmethod
+    def get_layers_params(self) -> []:
+        """
+        Get list of layer parameters
+
+        :return: list of layers parameters
+        """

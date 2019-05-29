@@ -4,7 +4,6 @@ from cv_utils.models.encoders.common import BasicEncoder
 
 __all__ = ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152']
 
-
 _model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
     'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
@@ -110,6 +109,7 @@ class ResNet(BasicEncoder):
         in_channels (int): number of channels for input image
         zero_init_residual (bool): is need to init the last BN in each residual branch by zeros
     """
+
     def __init__(self, block, layers, in_channels: int = 3, zero_init_residual=False):
         super().__init__()
         self.inplanes = 64
@@ -139,6 +139,8 @@ class ResNet(BasicEncoder):
                     nn.init.constant_(m.bn3.weight, 0)
                 elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
+
+        self._init_layers_params(block)
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
@@ -174,6 +176,25 @@ class ResNet(BasicEncoder):
         x = self.layer4(x)
 
         return x
+
+    def get_layers_params(self) -> []:
+        return self._layers_params
+
+    def _init_layers_params(self, basic_block):
+        if basic_block is BasicBlock:
+            self._layers_params = [{'filter_size': 64, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                                   {'filter_size': 64, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                                   {'filter_size': 128, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                                   {'filter_size': 256, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                                   {'filter_size': 512, 'kernel_size': 3, 'stride': 1, 'padding': 1}]
+        elif basic_block is Bottleneck:
+            self._layers_params = [{'filter_size': 64, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                                   {'filter_size': 256, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                                   {'filter_size': 512, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                                   {'filter_size': 1024, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                                   {'filter_size': 2048, 'kernel_size': 3, 'stride': 1, 'padding': 1}]
+        else:
+            raise Exception("Undefined basic block")
 
 
 def resnet18(in_channels: int = 3, pretrained=False, zero_init_residual: bool = False):
