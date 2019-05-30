@@ -5,7 +5,7 @@ import torch
 
 from cv_utils.models.encoders.inception import InceptionV3Encoder
 from cv_utils.models.encoders.mobile_net import MobileNetV2Encoder
-from cv_utils.models.encoders.resnet import resnet18, resnet34, resnet50, resnet101, resnet152
+from cv_utils.models.encoders.resnet import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
 
 __all__ = ['MobileNetV2EncoderTest', 'InceptionV3EncoderTest', 'ResNet18EncoderTest', 'ResNet34EncoderTest', 'ResNet50EncoderTest', 'ResNet101EncoderTest', 'ResNet152EncoderTest']
 
@@ -103,7 +103,7 @@ class ResNet18EncoderTest(BasicEncoderTest):
     _layers_num = 4
 
     def _init_encoder(self, in_channels: int):
-        return resnet18(in_channels)
+        return ResNet18(in_channels)
 
     @staticmethod
     def _get_out_size_by_input_size(batch_size, in_channels, img_size_x, img_size_y):
@@ -116,7 +116,7 @@ class ResNet34EncoderTest(BasicEncoderTest):
     _layers_num = 4
 
     def _init_encoder(self, in_channels: int):
-        return resnet34(in_channels)
+        return ResNet34(in_channels)
 
     @staticmethod
     def _get_out_size_by_input_size(batch_size, in_channels, img_size_x, img_size_y):
@@ -129,7 +129,7 @@ class ResNet50EncoderTest(BasicEncoderTest):
     _layers_num = 4
 
     def _init_encoder(self, in_channels: int):
-        return resnet50(in_channels)
+        return ResNet50(in_channels)
 
     @staticmethod
     def _get_out_size_by_input_size(batch_size, in_channels, img_size_x, img_size_y):
@@ -142,7 +142,7 @@ class ResNet101EncoderTest(BasicEncoderTest):
     _layers_num = 4
 
     def _init_encoder(self, in_channels: int):
-        return resnet101(in_channels)
+        return ResNet101(in_channels)
 
     @staticmethod
     def _get_out_size_by_input_size(batch_size, in_channels, img_size_x, img_size_y):
@@ -155,7 +155,7 @@ class ResNet152EncoderTest(BasicEncoderTest):
     _layers_num = 4
 
     def _init_encoder(self, in_channels: int):
-        return resnet152(in_channels)
+        return ResNet152(in_channels)
 
     @staticmethod
     def _get_out_size_by_input_size(batch_size, in_channels, img_size_x, img_size_y):

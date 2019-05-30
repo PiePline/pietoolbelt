@@ -6,7 +6,7 @@ import torch
 from cv_utils.models.decoders.unet import UNetDecoder
 from cv_utils.models.encoders.inception import InceptionV3Encoder
 from cv_utils.models.encoders.mobile_net import MobileNetV2Encoder
-from cv_utils.models.encoders.resnet import resnet18, resnet34, resnet50, resnet101, resnet152
+from cv_utils.models.encoders.resnet import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
 
 __all__ = ['ResNet18DecoderTest', 'ResNet34DecoderTest', 'ResNet50DecoderTest', 'ResNet101DecoderTest', 'ResNet152DecoderTest']
 
@@ -69,7 +69,7 @@ class ResNet18DecoderTest(BasicUnetTest):
     _layers_num = 5
 
     def _init_unet(self, in_channels: int, classes_num: int):
-        return UNetDecoder(resnet18(in_channels), classes_num=classes_num)
+        return UNetDecoder(ResNet18(in_channels), classes_num=classes_num)
 
     @staticmethod
     def _get_out_size_by_input_size(batch_size, classes_num, img_size_x, img_size_y):
@@ -82,7 +82,7 @@ class ResNet34DecoderTest(BasicUnetTest):
     _layers_num = 5
 
     def _init_unet(self, in_channels: int, classes_num: int):
-        return UNetDecoder(resnet34(in_channels), classes_num=classes_num)
+        return UNetDecoder(ResNet34(in_channels), classes_num=classes_num)
 
     @staticmethod
     def _get_out_size_by_input_size(batch_size, classes_num, img_size_x, img_size_y):
@@ -95,7 +95,7 @@ class ResNet50DecoderTest(BasicUnetTest):
     _layers_num = 5
 
     def _init_unet(self, in_channels: int, classes_num: int):
-        return UNetDecoder(resnet50(in_channels), classes_num=classes_num)
+        return UNetDecoder(ResNet50(in_channels), classes_num=classes_num)
 
     @staticmethod
     def _get_out_size_by_input_size(batch_size, classes_num, img_size_x, img_size_y):
@@ -108,7 +108,7 @@ class ResNet101DecoderTest(BasicUnetTest):
     _layers_num = 5
 
     def _init_unet(self, in_channels: int, classes_num: int):
-        return UNetDecoder(resnet101(in_channels), classes_num=classes_num)
+        return UNetDecoder(ResNet101(in_channels), classes_num=classes_num)
 
     @staticmethod
     def _get_out_size_by_input_size(batch_size, classes_num, img_size_x, img_size_y):
@@ -121,7 +121,7 @@ class ResNet152DecoderTest(BasicUnetTest):
     _layers_num = 5
 
     def _init_unet(self, in_channels: int, classes_num: int):
-        return UNetDecoder(resnet152(in_channels), classes_num=classes_num)
+        return UNetDecoder(ResNet152(in_channels), classes_num=classes_num)
 
     @staticmethod
     def _get_out_size_by_input_size(batch_size, classes_num, img_size_x, img_size_y):

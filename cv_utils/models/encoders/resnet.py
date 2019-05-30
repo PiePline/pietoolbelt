@@ -2,15 +2,7 @@ import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 from cv_utils.models.encoders.common import BasicEncoder
 
-__all__ = ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152']
-
-_model_urls = {
-    'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
-    'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
-    'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
-    'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
-    'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
-}
+__all__ = ['ResNet18', 'ResNet34', 'ResNet50', 'ResNet101', 'ResNet152']
 
 
 def conv3x3(in_planes, out_planes, stride=1):
@@ -110,7 +102,7 @@ class ResNet(BasicEncoder):
         zero_init_residual (bool): is need to init the last BN in each residual branch by zeros
     """
 
-    def __init__(self, block, layers, in_channels: int = 3, zero_init_residual=False):
+    def __init__(self, block, layers, in_channels: int, zero_init_residual=False):
         super().__init__()
         self.inplanes = 64
         self.conv1 = nn.Conv2d(in_channels, 64, kernel_size=7, stride=2, padding=3,
@@ -197,91 +189,50 @@ class ResNet(BasicEncoder):
             raise Exception("Undefined basic block")
 
 
-def resnet18(in_channels: int = 3, pretrained=False, zero_init_residual: bool = False):
-    """
-    Constructs a ResNet-18 model.
+class ResNetBasicBlock(ResNet):
+    def __init__(self, layers, in_channels: int, zero_init_residual=False):
+        super().__init__(BasicBlock, layers, in_channels=in_channels, zero_init_residual=zero_init_residual)
 
-    This model get tensor of size `[B, C, 32 * i, 32 * j]`, where i, j = 2, 3, 4, ...
-    The produce tensor size is: [B, 512, i, j]`
-
-    Args:
-        in_channels (int): number of input channels
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        zero_init_residual (bool): is need to init the last BN in each residual branch by zeros
-    """
-    model = ResNet(BasicBlock, [2, 2, 2, 2], zero_init_residual=zero_init_residual, in_channels=in_channels)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(_model_urls['resnet18']))
-    return model
+    def _init_layers_params(self, basic_block):
+        self._layers_params = [{'filter_size': 64, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 64, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 128, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 256, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 512, 'kernel_size': 3, 'stride': 1, 'padding': 1}]
 
 
-def resnet34(in_channels: int = 3, pretrained=False, zero_init_residual: bool = False):
-    """
-    Constructs a ResNet-34 model.
+class ResNetBottleneck(ResNet):
+    def __init__(self, layers, in_channels: int, zero_init_residual=False):
+        super().__init__(Bottleneck, layers, in_channels=in_channels, zero_init_residual=zero_init_residual)
 
-    This model get tensor of size `[B, C, 32 * i, 32 * j]`, where i, j = 2, 3, 4, ...
-    The produce tensor size is: [B, 512, i, j]`
-
-    Args:
-        in_channels (int): number of input channels
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        zero_init_residual (bool): is need to init the last BN in each residual branch by zeros
-    """
-    model = ResNet(BasicBlock, [3, 4, 6, 3], zero_init_residual=zero_init_residual, in_channels=in_channels)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(_model_urls['resnet34']))
-    return model
+    def _init_layers_params(self, basic_block):
+        self._layers_params = [{'filter_size': 64, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 256, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 512, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 1024, 'kernel_size': 3, 'stride': 1, 'padding': 1},
+                               {'filter_size': 2048, 'kernel_size': 3, 'stride': 1, 'padding': 1}]
 
 
-def resnet50(in_channels: int = 3, pretrained=False, zero_init_residual: bool = False):
-    """
-    Constructs a ResNet-50 model.
-
-    This model get tensor of size `[B, C, 32 * i, 32 * j]`, where i, j = 2, 3, 4, ...
-    The produce tensor size is: [B, 2048, i, j]`
-
-    Args:
-        in_channels (int): number of input channels
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        zero_init_residual (bool): is need to init the last BN in each residual branch by zeros
-    """
-    model = ResNet(Bottleneck, [3, 4, 6, 3], zero_init_residual=zero_init_residual, in_channels=in_channels)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(_model_urls['resnet50']))
-    return model
+class ResNet18(ResNetBasicBlock):
+    def __init__(self, in_channels: int, zero_init_residual=False):
+        super().__init__([2, 2, 2, 2], in_channels, zero_init_residual)
 
 
-def resnet101(in_channels: int = 3, pretrained=False, zero_init_residual: bool = False):
-    """
-    Constructs a ResNet-101 model.
-
-    This model get tensor of size `[B, C, 32 * i, 32 * j]`, where i, j = 2, 3, 4, ...
-    The produce tensor size is: [B, 2048, i, j]`
-
-    Args:
-        in_channels (int): number of input channels
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        zero_init_residual (bool): is need to init the last BN in each residual branch by zeros
-    """
-    model = ResNet(Bottleneck, [3, 4, 23, 3], zero_init_residual=zero_init_residual, in_channels=in_channels)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(_model_urls['resnet101']))
-    return model
+class ResNet34(ResNetBasicBlock):
+    def __init__(self, in_channels: int, zero_init_residual=False):
+        super().__init__([3, 4, 6, 3], in_channels, zero_init_residual)
 
 
-def resnet152(in_channels: int = 3, pretrained=False, zero_init_residual: bool = False):
-    """
-    Constructs a ResNet-152 model.
+class ResNet50(ResNetBottleneck):
+    def __init__(self, in_channels: int, zero_init_residual=False):
+        super().__init__([3, 4, 6, 3], in_channels, zero_init_residual)
 
-    This model get tensor of size `[B, C, 32 * i, 32 * j]`, where i, j = 2, 3, 4, ...
-    The produce tensor size is: [B, 2048, i, j]`
 
-    Args:
-        in_channels (int): number of input channels
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        zero_init_residual (bool): is need to init the last BN in each residual branch by zeros
-    """
-    model = ResNet(Bottleneck, [3, 8, 36, 3], zero_init_residual=zero_init_residual, in_channels=in_channels)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(_model_urls['resnet152']))
-    return model
+class ResNet101(ResNetBottleneck):
+    def __init__(self, in_channels: int, zero_init_residual=False):
+        super().__init__([3, 4, 23, 3], in_channels, zero_init_residual)
+
+
+class ResNet152(ResNetBottleneck):
+    def __init__(self, in_channels: int, zero_init_residual=False):
+        super().__init__([3, 8, 36, 3], in_channels, zero_init_residual)
