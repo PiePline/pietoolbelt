@@ -40,8 +40,8 @@ class UNetDecoder(Module):
         params = encoder.get_layers_params()
 
         decoder_stages = []
-        for idx, param in enumerate(params):
-            decoder_stages.append(UNetDecoderBlock(param['filter_size'], params[max(idx - 1, 0)]['filter_size'], param['kernel_size'], param['stride'], param['stride']))
+        for idx, param in enumerate(params[1:]):
+            decoder_stages.append(UNetDecoderBlock(param['filter_size'], params[max(idx, 0)]['filter_size'], param['kernel_size'], param['stride'], param['stride']))
         self.decoder_stages = nn.ModuleList(decoder_stages)
 
         self.bottlenecks = nn.ModuleList([ConvBottleneck(p['filter_size'] * 2, p['filter_size']) for p in reversed(params[:-1])])
