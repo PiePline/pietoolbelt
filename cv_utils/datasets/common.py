@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 def get_root_by_env(env_name: str) -> str:
     if env_name not in os.environ:
         raise Exception("Can't get dataset root. Please define '" + env_name + "' environment variable")
-    return os.environ['SUPERVISELY_DATASET']
+    return os.environ[env_name]
 
 
 class BasicDataset(metaclass=ABCMeta):

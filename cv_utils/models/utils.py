@@ -46,4 +46,5 @@ class ClassificationModel(Module):
 
     def forward(self, data):
         data = self._encoder(data)
+        data = data.view(data.size(0), -1)
         return self.fc(data)
