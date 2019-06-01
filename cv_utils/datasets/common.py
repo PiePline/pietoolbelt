@@ -39,21 +39,24 @@ class BasicDataset(metaclass=ABCMeta):
         """
         return self._items
 
-    def set_indices(self, indices: [int], remove_unused: bool = False):
+    def set_indices(self, indices: [int], remove_unused: bool = False) -> 'BasicDataset':
         if remove_unused:
             self._items = [self._items[idx] for idx in indices]
             self._indices = None
         else:
             self._indices = indices
+        return self
 
     def get_indices(self) -> []:
         return self._indices
 
-    def load_indices(self, path: str, remove_unused: bool = False):
+    def load_indices(self, path: str, remove_unused: bool = False) -> 'BasicDataset':
         self.set_indices(np.load(path), remove_unused)
+        return self
 
-    def flush_indices(self, path: str):
+    def flush_indices(self, path: str) -> 'BasicDataset':
         np.save(path, self._indices)
+        return self
 
     def __getitem__(self, idx):
         if self._indices is None:
