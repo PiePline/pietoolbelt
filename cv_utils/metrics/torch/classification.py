@@ -51,7 +51,7 @@ class _ClassificationMetric(AbstractMetric):
         val_internal = val.data.cpu().numpy()
         idx = np.argmax(val_internal, axis=1)
         max_vals = val_internal[np.arange(len(val_internal)), idx]
-        return np.where(idx > 0, max_vals, 1 - max_vals)
+        return np.squeeze(np.where(idx > 0, max_vals, 1 - max_vals))
 
     @staticmethod
     def multiclass_target_preproc(val: Tensor):
@@ -62,10 +62,10 @@ class _ClassificationMetric(AbstractMetric):
               val (Tensor): values to target as Tensor of size [B, 1]
 
         Returns:
-            np.ndarray of shape [B, 1]
+            np.ndarray of shape [B]
         """
         val_internal = val.data.cpu().numpy()
-        return np.clip(val_internal, 0, 1).astype(np.int)
+        return np.squeeze(np.clip(val_internal, 0, 1).astype(np.int))
 
     def calc(self, predict: Tensor, target: Tensor) -> np.ndarray or float:
         """
