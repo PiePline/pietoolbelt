@@ -1,5 +1,4 @@
 import torch.nn as nn
-import torch.utils.model_zoo as model_zoo
 from cv_utils.models.encoders.common import BasicEncoder
 
 __all__ = ['ResNet18', 'ResNet34', 'ResNet50', 'ResNet101', 'ResNet152']
