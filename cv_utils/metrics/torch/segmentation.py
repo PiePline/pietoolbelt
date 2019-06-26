@@ -32,15 +32,15 @@ def dice(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tensor:
     Calculate Dice coefficient
 
     Args:
-        pred (Tensor): predicted masks of shape [B, H, W]
-        target (Tensor): target masks of shape [B, H, W]
+        pred (Tensor): predicted masks of shape [B, 1, H, W]
+        target (Tensor): target masks of shape [B, 1, H, W]
         eps (float): smooth value
 
     Returns:
         Tensor: Tensor with values of Dice coefficient. Tensor size: [B]
     """
-    pred_inner = pred.view((pred.size(0), pred.size(1) * pred.size(2)))
-    target_inner = target.view((target.size(0), target.size(1) * target.size(2)))
+    pred_inner = pred.view((pred.size(0), pred.size(2) * pred.size(3)))
+    target_inner = target.view((target.size(0), target.size(2) * target.size(3)))
 
     intersection = (pred_inner * target_inner).sum(1)
     return (2. * intersection + eps) / ((pred_inner * pred_inner).sum(1) + (target_inner * target_inner).sum(1) + eps)
@@ -51,15 +51,15 @@ def jaccard(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tensor:
     Calculate Jaccard coefficient
 
     Args:
-        pred (Tensor): predicted masks of shape [B, H, W]
-        target (Tensor): target masks of shape [B, H, W]
+        pred (Tensor): predicted masks of shape [B, 1, H, W]
+        target (Tensor): target masks of shape [B, 1, H, W]
         eps (float): smooth value
 
     Returns:
         Tensor: Tensor with values of Jaccard coefficient. Tensor size: [B]
     """
-    preds_inner = pred.view((pred.size(0), pred.size(1) * pred.size(2)))
-    trues_inner = target.view((target.size(0), target.size(1) * target.size(2)))
+    preds_inner = pred.view((pred.size(0), pred.size(2) * pred.size(3)))
+    trues_inner = target.view((target.size(0), target.size(2) * target.size(3)))
 
     intersection = (preds_inner * trues_inner).sum(1)
     return (intersection + eps) / ((preds_inner + trues_inner).sum(1) - intersection + eps)
@@ -110,7 +110,7 @@ class _SegmentationMetric(AbstractMetric):
         self._eps = eps
 
     def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
-        return np.squeeze(self._func(self._activation(output), target, self._eps).cpu().numpy())
+        return np.squeeze(self._func(self._activation(output.detach()), target, self._eps).cpu().numpy())
 
     @staticmethod
     def min_val() -> float:
@@ -135,7 +135,7 @@ class MulticlassSegmentationMetric(_SegmentationMetric):
             raise Exception("Unexpected reduction '{}'. Possible values: [sum, mean]".format(reduction))
 
     def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
-        res = np.squeeze(self._func(self._activation(output), target).data.cpu().numpy())
+        res = np.squeeze(self._func(self._activation(output.detach()), target).data.cpu().numpy())
         return self._reduction(res)
 
 

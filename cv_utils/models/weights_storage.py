@@ -15,8 +15,8 @@ class ModelsWeightsStorage:
         else:
             self._path = path
 
-    def load(self, model: Module, dataset: str = None):
-        weights_file = os.path.join(self._path, self._compile_model_name(model, dataset))
+    def load(self, model: Module, dataset: str = None, params: {} = None):
+        weights_file = os.path.join(self._path, self._compile_model_name(model, dataset, params))
 
         print("Model inited by file:", weights_file, end='; ')
         pretrained_weights = torch.load(weights_file)
@@ -39,11 +39,13 @@ class ModelsWeightsStorage:
         print("dict len after:", len(processed))
 
     @staticmethod
-    def _compile_model_name(model: Module, dataset: str):
-        return str(type(model).__name__) + "_" + str("any" if dataset is None else dataset) + ".pth"
+    def _compile_model_name(model: Module, dataset: str, params: {}):
+        dataset_name = "__{}".format(str("any" if dataset is None else dataset))
+        params_name = "" if params is None else ("__" + "__".join(['{}_{}'.format(k, v) for k, v in params.items()]))
+        return str(type(model).__name__) + dataset_name + params_name + ".pth"
 
-    def save(self, model: Module, dataset: str = None):
-        weights_file = os.path.join(self._path, self._compile_model_name(model, dataset))
+    def save(self, model: Module, dataset: str = None, params: {} = None):
+        weights_file = os.path.join(self._path, self._compile_model_name(model, dataset, params))
 
         if os.path.exists(weights_file):
             raise Exception("File '" + weights_file + "' also exists in storage")
