@@ -1,6 +1,6 @@
 import torch
 from neural_pipeline import AbstractMetric, MetricsProcessor, MetricsGroup
-from torch import Tensor
+from torch import Tensor, nn
 import numpy as np
 
 from cv_utils.models.utils import Activation
@@ -103,14 +103,25 @@ def multiclass_jaccard(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tenso
 
 
 class _SegmentationMetric(AbstractMetric):
-    def __init__(self, name: str, func: callable, activation: str = None, eps: float = 1e-7):
+    def __init__(self, name: str, func: callable, activation: str = None, eps: float = 1e-7, threshold: float = None):
         super().__init__(name)
         self._func = func
         self._activation = Activation(activation)
         self._eps = eps
 
+        if threshold is None:
+            self.tensor_preproc = lambda x: x
+        else:
+            self.tensor_preproc = lambda x: self._thresh(x, threshold)
+
     def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
-        return np.squeeze(self._func(self._activation(output.detach()), target, self._eps).cpu().numpy())
+        return np.squeeze(self._func(self._activation(output), target, self._eps).cpu().numpy())
+
+    @staticmethod
+    def _thresh(output: Tensor, thresh) -> Tensor:
+        output[output < thresh] = 0
+        output[output > 0] = 1
+        return output
 
     @staticmethod
     def min_val() -> float:
@@ -135,24 +146,30 @@ class MulticlassSegmentationMetric(_SegmentationMetric):
             raise Exception("Unexpected reduction '{}'. Possible values: [sum, mean]".format(reduction))
 
     def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
-        res = np.squeeze(self._func(self._activation(output.detach()), target).data.cpu().numpy())
+        res = np.squeeze(self._func(self._activation(output), target).data.cpu().numpy())
         return self._reduction(res)
 
 
 class DiceMetric(_SegmentationMetric):
-    def __init__(self, activation: str = None, eps: float = 1e-7):
-        super().__init__('dice', dice, activation, eps)
+    def __init__(self, activation: str = None, eps: float = 1e-7, thresh: float = None):
+        super().__init__('dice' if thresh is None else 'dice_{:1.1f}'.format(thresh), dice, activation, eps, threshold=thresh)
 
 
 class JaccardMetric(_SegmentationMetric):
-    def __init__(self, activation: str = None, eps: float = 1e-7):
-        super().__init__('jaccard', jaccard, activation, eps)
+    def __init__(self, activation: str = None, eps: float = 1e-7, thresh: float = None):
+        super().__init__('jaccard' if thresh is None else 'jaccard_{:1.1f}'.format(thresh), jaccard, activation, eps, threshold=thresh)
 
 
 class SegmentationMetricsProcessor(MetricsProcessor):
-    def __init__(self, stage_name: str, activation: str = None):
+    def __init__(self, stage_name: str, activation: str = None, thresholds: [float] = None):
         super().__init__()
-        self.add_metrics_group(MetricsGroup(stage_name).add(JaccardMetric(activation)).add(DiceMetric(activation)))
+        group = MetricsGroup(stage_name)
+
+        if thresholds is not None:
+            for thresh in thresholds:
+                if thresh is not None:
+                    group.add(JaccardMetric(activation, thresh=thresh)).add(DiceMetric(activation, thresh=thresh))
+        self.add_metrics_group(group.add(JaccardMetric(activation)).add(DiceMetric(activation)))
 
 
 class MulticlassDiceMetric(MulticlassSegmentationMetric):
