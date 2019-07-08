@@ -40,7 +40,7 @@ class BCEDiceLoss(ComposedLoss):
         if class_weights is None:
             bce_loss = torch.nn.BCELoss()
         else:
-            bce_loss = torch.nn.BCELoss(torch.Tensor(class_weights))
+            bce_loss = torch.nn.BCELoss(torch.Tensor([1] + class_weights))
         dice_loss = DiceLoss(eps=eps, activation=activation, reduction=reduction)
 
         super().__init__([bce_loss, dice_loss], [bce_w, dice_w])
