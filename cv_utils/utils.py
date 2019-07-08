@@ -3,32 +3,16 @@ import numpy as np
 __all__ = ['mask2rle', 'rle2mask']
 
 
-def mask2rle(img: np.ndarray, width: int, height: int):
-    rle = []
-    lastColor = 0
-    currentPixel = 0
-    runStart = -1
-    runLength = 0
-
-    for x in range(width):
-        for y in range(height):
-            currentColor = img[x][y]
-            if currentColor != lastColor:
-                if currentColor == 255:
-                    runStart = currentPixel
-                    runLength = 1
-                else:
-                    rle.append(str(runStart))
-                    rle.append(str(runLength))
-                    runStart = -1
-                    runLength = 0
-                    currentPixel = 0
-            elif runStart > -1:
-                runLength += 1
-            lastColor = currentColor
-            currentPixel += 1
-
-    return " ".join(rle)
+def mask2rle(img: np.ndarray):
+    """
+    img: numpy array, 1 - mask, 0 - background
+    Returns run length as string formated
+    """
+    pixels = img.copy().T.flatten()
+    pixels = np.concatenate([[0], pixels, [0]])
+    runs = np.where(pixels[1:] != pixels[:-1])[0] + 1
+    runs[1::2] -= runs[::2]
+    return ' '.join(str(x) for x in runs)
 
 
 def rle2mask(rle: [int], width: int, height: int):
