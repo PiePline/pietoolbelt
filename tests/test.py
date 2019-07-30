@@ -4,6 +4,7 @@ from metrics import *
 from losses import *
 from datasets import *
 from models import *
+from tiles_utils import *
 
 
 if __name__ == '__main__':

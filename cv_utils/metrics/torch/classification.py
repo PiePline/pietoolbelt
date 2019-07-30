@@ -145,8 +145,13 @@ class ClassificationMetricsProcessor(MetricsProcessor):
 
         self._auc_metrics = []
         auc_group = MetricsGroup('ROC_AUC')
-        for thresh in thresholds:
-            self._auc_metrics.append(auc_group.add(ROCAUCMetric(thresh, '{}_{}'.format(name, thresh))))
+        if thresholds is None:
+            self._auc_metrics.append(ROCAUCMetric(0.5, name))
+            auc_group.add(self._auc_metrics[-1])
+        else:
+            for thresh in thresholds:
+                self._auc_metrics.append(ROCAUCMetric(thresh, '{}_{}'.format(name, thresh)))
+                auc_group.add(self._auc_metrics[-1])
 
         self.add_metrics_group(auc_group)
 
