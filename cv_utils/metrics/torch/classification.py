@@ -98,7 +98,7 @@ class _ClassificationMetric(AbstractMetric):
         """
         res = self._get_values()
         self._targets, self._preds = [], []
-        return res
+        return np.array([res]) if type(res) is float else res
 
 
 class ROCAUCMetric(_ClassificationMetric):
