@@ -28,6 +28,16 @@ class ColormapVisualizer(SegmentationVisualizer):
         return cv2.addWeighted(heatmap_img, self._proportions[1], image, self._proportions[0], 0)
 
 
+class ContourVisualizer(SegmentationVisualizer):
+    def __init__(self, thickness: int = 1, color: tuple = (0, 255, 0)):
+        self._thick = thickness
+        self._color = color
+
+    def process_img(self, image, mask) -> np.ndarray:
+        cntrs, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        return cv2.drawContours(image, cntrs, -1, self._color, self._thick)
+
+
 class MulticlassColormapVisualizer(ColormapVisualizer):
     def __init__(self, main_class: int, proportions: [float, float], colormap=cv2.COLORMAP_JET, other_colors: [] = None):
         super().__init__(proportions, colormap)
