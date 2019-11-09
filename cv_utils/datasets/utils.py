@@ -82,7 +82,7 @@ class MulticlassSegmentationDataset(AbstractDataset):
         res = self._dataset[item]
 
         target = res[self._target_key]
-        target_shape = target[0].shape
+        target_shape = (target['size']['height'], target['size']['width'])
         composer = MasksComposer(target_shape)
 
         if self._border_thickness is None:
@@ -92,7 +92,7 @@ class MulticlassSegmentationDataset(AbstractDataset):
                                           dilate_masks_kernel=np.ones((self._border_thickness, self._border_thickness),
                                                                       dtype=np.uint8))
 
-        for obj in target:
-            composer.add_mask(obj, 0)
+        for obj in target['masks']:
+            composer.add_mask(obj[0], 0, offset=obj[1])
 
         return composer.compose()
