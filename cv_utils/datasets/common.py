@@ -2,6 +2,8 @@ import os
 import numpy as np
 from abc import ABCMeta, abstractmethod
 
+from neural_pipeline import AbstractDataset
+
 
 def get_root_by_env(env_name: str) -> str:
     if env_name not in os.environ:
@@ -9,7 +11,7 @@ def get_root_by_env(env_name: str) -> str:
     return os.environ[env_name]
 
 
-class BasicDataset(metaclass=ABCMeta):
+class BasicDataset(AbstractDataset, metaclass=ABCMeta):
     """
     The standard dataset basic class.
 
