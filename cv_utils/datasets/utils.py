@@ -95,4 +95,5 @@ class MulticlassSegmentationDataset(AbstractDataset):
         for obj in target['masks']:
             composer.add_mask(obj[0], 0, offset=obj[1])
 
-        return composer.compose()
+        res[self._target_key] = composer.compose()
+        return res
