@@ -1,4 +1,6 @@
 import numpy as np
+from cv_utils.mask_composer import MasksComposer
+from neural_pipeline import AbstractDataset
 
 __all__ = ['EmptyClassesAdd', 'AugmentedDataset']
 
@@ -6,7 +8,8 @@ __all__ = ['EmptyClassesAdd', 'AugmentedDataset']
 class EmptyClassesAdd:
     def __init__(self, dataset, target_classes_num: int, exists_class_idx: int):
         if target_classes_num <= exists_class_idx:
-            raise Exception("Target classes number ({}) can't be less or equal than exists class index ({})".format(target_classes_num, exists_class_idx))
+            raise Exception("Target classes number ({}) can't be less or equal than exists class index ({})".format(target_classes_num,
+                                                                                                                    exists_class_idx))
 
         self._dataset = dataset
         self._target_classes_num = target_classes_num
@@ -57,3 +60,39 @@ class AugmentedDataset:
 
     def __len__(self):
         return len(self._dataset)
+
+
+class MulticlassSegmentationDataset(AbstractDataset):
+    def __init__(self, dataset: AbstractDataset, target_key: str = 'target'):
+        self._dataset = dataset
+        self._target_key = target_key
+
+        self._border_thickness = None
+        self._border_cls_pos = None
+
+    def enable_border(self, thickness: int, border_cls_position: int = 1) -> 'MulticlassSegmentationDataset':
+        self._border_thickness = thickness
+        self._border_cls_pos = border_cls_position
+        return self
+
+    def __len__(self):
+        return len(self._dataset)
+
+    def __getitem__(self, item: int):
+        res = self._dataset[item]
+
+        target = res[self._target_key]
+        target_shape = target[0].shape
+        composer = MasksComposer(target_shape)
+
+        if self._border_thickness is None:
+            composer.add_borders_as_class(between_classes=[self._border_cls_pos])
+        else:
+            composer.add_borders_as_class(between_classes=[self._border_cls_pos],
+                                          dilate_masks_kernel=np.ones((self._border_thickness, self._border_thickness),
+                                                                      dtype=np.uint8))
+
+        for obj in target:
+            composer.add_mask(obj, 0)
+
+        return composer.compose()
