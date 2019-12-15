@@ -1,4 +1,8 @@
+from random import shuffle
+
 import numpy as np
+from cv_utils.datasets.common import BasicDataset
+
 from cv_utils.mask_composer import MasksComposer
 from neural_pipeline import AbstractDataset
 
@@ -97,3 +101,40 @@ class MulticlassSegmentationDataset(AbstractDataset):
 
         res[self._target_key] = composer.compose()
         return res
+
+
+class DatasetsContainer(AbstractDataset):
+    def __init__(self, datasets: [BasicDataset]):
+        self._datasets = datasets
+        self._len = None
+        self._update_datasets_idx_space()
+
+        self._indices = None
+
+    def __len__(self):
+        return self._len
+
+    def __getitem__(self, item):
+        if self._indices is None:
+            dataset_idx, data_idx = 0, item
+            for i in range(len(self._datasets)):
+                if item > self._datatsets_idx_space[i]:
+                    dataset_idx = i + 1
+                    data_idx = item - self._datatsets_idx_space[i] - 1
+        else:
+            dataset_idx, data_idx = self._indices[item].split('_')
+            dataset_idx, data_idx = int(dataset_idx), int(data_idx)
+
+        return self._datasets[dataset_idx][data_idx]
+
+    def _update_datasets_idx_space(self) -> None:
+        """
+        Update idx space of datasets. Idx space used for correct mapping global idx to corresponding dataset data index
+        """
+        datasets_len = [len(d) for d in self._datasets]
+        self._len = sum(datasets_len)
+        self._datatsets_idx_space = []
+        cur_len = 0
+        for dataset_len in datasets_len:
+            self._datatsets_idx_space.append(dataset_len + cur_len - 1)
+            cur_len += dataset_len
