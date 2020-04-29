@@ -4,22 +4,88 @@ from abc import ABCMeta, abstractmethod
 
 from neural_pipeline import AbstractDataset
 
+__all__ = ['DatasetException', 'get_root_by_env', 'AbstractIndexedDataset', 'AbstractDataset', 'IndexedDataset', 'BasicDataset']
+
+
+class DatasetException(Exception):
+    def __init__(self, msg: str):
+        self._msg = msg
+
+    def __str__(self) -> str:
+        return self._msg
+
 
 def get_root_by_env(env_name: str) -> str:
+    """
+    Get dataset root by environment variable
+
+    :param env_name: environment variable name
+    :return: path to dataset root
+    """
     if env_name not in os.environ:
-        raise Exception("Can't get dataset root. Please define '" + env_name + "' environment variable")
+        raise DatasetException("Can't get dataset root. Please define '" + env_name + "' environment variable")
     return os.environ[env_name]
 
 
-class BasicDataset(AbstractDataset, metaclass=ABCMeta):
+class AbstractIndexedDataset(metaclass=ABCMeta):
+    """
+    Interface for work with indices in datasets
+    """
+
+    def __init__(self):
+        self._indices = None
+        self._use_indices = False
+
+    def set_indices(self, indices: [np.uint]) -> 'AbstractIndexedDataset':
+        self._indices = indices
+        self._use_indices = True
+        return self
+
+    def get_indices(self) -> [np.uint]:
+        return self._indices
+
+    def use_indices(self, need_use: bool = True) -> 'AbstractIndexedDataset':
+        self._use_indices = need_use
+        return self
+
+    def remove_indices(self) -> 'AbstractIndexedDataset':
+        self._indices = None
+        self.use_indices(False)
+        return self
+
+    def load_indices(self, path: str) -> 'AbstractIndexedDataset':
+        self.set_indices(np.load(path))
+        return self
+
+    def flush_indices(self, path: str) -> 'AbstractIndexedDataset':
+        if self._indices is None:
+            raise DatasetException
+        np.save(path, self._indices)
+        return self
+
+
+class IndexedDataset(AbstractIndexedDataset, AbstractDataset, metaclass=ABCMeta):
+    pass
+
+
+class BasicDataset(IndexedDataset):
     """
     The standard dataset basic class.
 
     Basic dataset get array of items and works with it. Array of items is just an array of shape [N, ?]
     """
-    def __init__(self, items):
+
+    def __init__(self, items: list):
+        super().__init__()
         self._items = items
-        self._indices = None
+
+    def get_items(self) -> list:
+        """
+        Get array of items
+
+        :return: array of indices
+        """
+        return self._items
 
     @abstractmethod
     def _interpret_item(self, item) -> any:
@@ -33,38 +99,17 @@ class BasicDataset(AbstractDataset, metaclass=ABCMeta):
             One item, that
         """
 
-    def get_items(self) -> []:
-        """
-        Get array of items
-
-        :return: array of indices
-        """
-        return self._items
-
-    def set_indices(self, indices: [int], remove_unused: bool = False) -> 'BasicDataset':
-        if remove_unused:
-            self._items = [self._items[idx] for idx in indices]
-            self._indices = None
-        else:
-            self._indices = indices
-        return self
-
-    def get_indices(self) -> []:
-        return self._indices
-
-    def load_indices(self, path: str, remove_unused: bool = False) -> 'BasicDataset':
-        self.set_indices(np.load(path), remove_unused)
-        return self
-
-    def flush_indices(self, path: str) -> 'BasicDataset':
-        np.save(path, self._indices)
-        return self
-
-    def __getitem__(self, idx):
-        if self._indices is None:
-            return self._interpret_item(self._items[idx])
-        else:
-            return self._interpret_item(self._items[self._indices[idx]])
+    def remove_unused_data(self):
+        self._items = [self._items[idx] for idx in self._indices]
+        self._use_indices = False
 
     def __len__(self):
+        if self._use_indices:
+            return len(self._indices)
         return len(self._items)
+
+    def __getitem__(self, idx):
+        if self._use_indices:
+            return self._interpret_item(self._items[self._indices[idx]])
+        else:
+            return self._interpret_item(self._items[idx])

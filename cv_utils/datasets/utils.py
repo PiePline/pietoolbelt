@@ -1,4 +1,4 @@
-from random import shuffle
+from typing import List, Tuple
 
 import numpy as np
 from cv_utils.datasets.common import BasicDataset
@@ -6,7 +6,7 @@ from cv_utils.datasets.common import BasicDataset
 from cv_utils.mask_composer import MasksComposer
 from neural_pipeline import AbstractDataset
 
-__all__ = ['EmptyClassesAdd', 'AugmentedDataset']
+__all__ = ['EmptyClassesAdd', 'AugmentedDataset', 'InstanceSegmentationDataset', 'DatasetsContainer']
 
 
 class EmptyClassesAdd:
@@ -66,7 +66,7 @@ class AugmentedDataset:
         return len(self._dataset)
 
 
-class MulticlassSegmentationDataset(AbstractDataset):
+class InstanceSegmentationDataset(AbstractDataset):
     def __init__(self, dataset: AbstractDataset, target_key: str = 'target'):
         self._dataset = dataset
         self._target_key = target_key
@@ -74,7 +74,7 @@ class MulticlassSegmentationDataset(AbstractDataset):
         self._border_thickness = None
         self._border_cls_pos = None
 
-    def enable_border(self, thickness: int, border_cls_position: int = 1) -> 'MulticlassSegmentationDataset':
+    def enable_border(self, thickness: int, border_cls_position: int = 1) -> 'InstanceSegmentationDataset':
         self._border_thickness = thickness
         self._border_cls_pos = border_cls_position
         return self
@@ -103,38 +103,30 @@ class MulticlassSegmentationDataset(AbstractDataset):
         return res
 
 
-class DatasetsContainer(AbstractDataset):
-    def __init__(self, datasets: [BasicDataset]):
+class DatasetsContainer(BasicDataset):
+    """
+    Datasets container used for represent a set of datasets as single dataset
+
+    ``WARNING``: be careful to use datasets indices when use ``DatasetsContainer`` indices!
+
+    Args:
+        datasets (list): list of datasets for unite
+    """
+    def __init__(self, datasets: [AbstractDataset]):
         self._datasets = datasets
-        self._len = None
-        self._update_datasets_idx_space()
+        items = self._update_datasets_idx_space(datasets)
+        super().__init__(items)
 
-        self._indices = None
-
-    def __len__(self):
-        return self._len
-
-    def __getitem__(self, item):
-        if self._indices is None:
-            dataset_idx, data_idx = 0, item
-            for i in range(len(self._datasets)):
-                if item > self._datatsets_idx_space[i]:
-                    dataset_idx = i + 1
-                    data_idx = item - self._datatsets_idx_space[i] - 1
-        else:
-            dataset_idx, data_idx = self._indices[item].split('_')
-            dataset_idx, data_idx = int(dataset_idx), int(data_idx)
-
-        return self._datasets[dataset_idx][data_idx]
-
-    def _update_datasets_idx_space(self) -> None:
+    @staticmethod
+    def _update_datasets_idx_space(datasets: [AbstractDataset]) -> List[Tuple]:
         """
         Update idx space of datasets. Idx space used for correct mapping global idx to corresponding dataset data index
         """
-        datasets_len = [len(d) for d in self._datasets]
-        self._len = sum(datasets_len)
-        self._datatsets_idx_space = []
-        cur_len = 0
-        for dataset_len in datasets_len:
-            self._datatsets_idx_space.append(dataset_len + cur_len - 1)
-            cur_len += dataset_len
+        items = []
+        datasets_len = [len(d) for d in datasets]
+        for dataset_idx, dataset_len in enumerate(datasets_len):
+            items.extend([(dataset_idx, i) for i in range(dataset_len)])
+        return items
+
+    def _interpret_item(self, item) -> any:
+        return self._datasets[item[0]][item[1]]

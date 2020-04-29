@@ -28,3 +28,12 @@ def rle2mask(rle: [int], width: int, height: int):
         current_position += lengths[index]
 
     return mask.reshape(width, height)
+
+
+def generate_folds_names(folds_num: int) -> list:
+    fold_indices = list(range(folds_num))
+    folds = []
+    for _ in range(folds_num):
+        fold_indices = fold_indices[-1:] + fold_indices[:-1]
+        folds.append({'train': ['fold_{}.npy'.format(i) for i in fold_indices[1:]], 'val': 'fold_{}.npy'.format(fold_indices[0])})
+    return folds
