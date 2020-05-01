@@ -92,8 +92,11 @@ class Bagging:
             os.makedirs(output_path)
 
         with open(os.path.join(output_path, 'metrics.json'), 'w') as metrics_out:
-            metrics_dict = {m['name']: Bagging._calc_metric_by_predict(best_predict, m['metric']) for m in self._metrics}
-            json.dump(dict({'models': best_predict['model']}, **metrics_dict), metrics_out, indent=4)
+            json.dump({m['name']: Bagging._calc_metric_by_predict(best_predict, m['metric']) for m in self._metrics},
+                      metrics_out, indent=4)
+
+        with open(os.path.join(output_path, 'meta.json'), 'w') as meta_out:
+            json.dump(best_predict['model'], meta_out, indent=4)
 
         with open(os.path.join(output_path, self._predicts_names), 'w') as pred_out, \
              open(os.path.join(output_path, self._targets_names), 'w') as ref_out:
