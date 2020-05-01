@@ -39,7 +39,7 @@ def calc_model_params_num(model: Module):
 
 
 class ClassificationModel(Module):
-    def __init__(self, encoder: Module, in_features: int, classes_num: int, pool = None):
+    def __init__(self, encoder: Module, in_features: int, classes_num: int, pool=None):
         super().__init__()
         self._encoder = encoder
         self.fc = nn.Linear(in_features, classes_num)
