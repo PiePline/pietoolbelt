@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABCMeta
 
 import numpy as np
-from neural_pipeline import MetricsProcessor, MetricsGroup, AbstractMetric
+from piepline import MetricsProcessor, MetricsGroup, AbstractMetric
 from torch import Tensor
 from sklearn.metrics import roc_auc_score, confusion_matrix
 

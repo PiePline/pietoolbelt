@@ -1,4 +1,4 @@
-from cv_utils.models.encoders.common import BasicEncoder
+from pietoolbelt.models.encoders.common import BasicEncoder
 
 import torch.nn as nn
 import math

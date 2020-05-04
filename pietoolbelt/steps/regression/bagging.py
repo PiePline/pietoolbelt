@@ -6,7 +6,7 @@ from multiprocessing import Pool
 import numpy as np
 from tqdm import tqdm
 
-from cv_utils.metrics.cpu.regression import rmse
+from pietoolbelt.metrics.cpu.regression import rmse
 
 
 class Bagging:

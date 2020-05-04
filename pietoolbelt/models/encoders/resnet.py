@@ -1,5 +1,5 @@
 import torch.nn as nn
-from cv_utils.models.encoders.common import BasicEncoder
+from pietoolbelt.models.encoders.common import BasicEncoder
 
 __all__ = ['ResNet18', 'ResNet34', 'ResNet50', 'ResNet101', 'ResNet152']
 

@@ -1,10 +1,10 @@
 from typing import List, Tuple
 
 import numpy as np
-from cv_utils.datasets.common import BasicDataset
+from pietoolbelt.datasets.common import BasicDataset
 
-from cv_utils.mask_composer import MasksComposer
-from neural_pipeline import AbstractDataset
+from pietoolbelt.mask_composer import MasksComposer
+from piepline import AbstractDataset
 
 __all__ = ['EmptyClassesAdd', 'AugmentedDataset', 'InstanceSegmentationDataset', 'DatasetsContainer']
 

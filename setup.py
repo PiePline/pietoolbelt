@@ -1,21 +1,24 @@
 import setuptools
-import neural_pipeline
+import pietoolbelt
 
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open('requirements.txt', 'r') as req_file:
+    requirements = req_file.readlines()
+
 setuptools.setup(
-    name="cv_utils",
-    version=neural_pipeline.__version__,
+    name="pietoolbelt",
+    version=pietoolbelt.__version__,
     author="Anton Fedotov",
     author_email="anton.fedotov.af@gmail.com",
-    description="Utils for computer vision tasks",
+    description="Toolbelt for PiePline training pipeline",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/toodef/cv_utils",
+    url="https://github.com/PiePline/PieToolbelt",
     packages=setuptools.find_packages(exclude=['tests']),
-    install_requires=['numpy', 'torch>=0.4.1', 'opencv-python'],
+    install_requires=requirements,
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3',

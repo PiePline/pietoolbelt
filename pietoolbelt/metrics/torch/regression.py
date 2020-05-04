@@ -1,12 +1,12 @@
 import torch
 import numpy as np
-from neural_pipeline import AbstractMetric
+from piepline import AbstractMetric
 from sklearn.preprocessing import MinMaxScaler
 from torch import Tensor
 
-from cv_utils.metrics.cpu.regression import rmse as rmse_cpu
-from cv_utils.metrics.cpu.regression import amad as amad_cpu
-from cv_utils.metrics.cpu.regression import relative as relative_cpu
+from pietoolbelt.metrics.cpu.regression import rmse as rmse_cpu
+from pietoolbelt.metrics.cpu.regression import amad as amad_cpu
+from pietoolbelt.metrics.cpu.regression import relative as relative_cpu
 
 __all__ = ['rmse', 'amad', 'relative', 'AMADMetric', 'RelativeMetric', 'RMSEMetric']
 

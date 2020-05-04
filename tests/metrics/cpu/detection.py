@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from cv_utils.metrics.cpu.detection import _calc_boxes_areas, _compute_boxes_iou, f_beta_score, calc_tp_fp_fn
+from pietoolbelt.metrics.cpu.detection import _calc_boxes_areas, _compute_boxes_iou, f_beta_score, calc_tp_fp_fn
 
 __all__ = ['CPUTest']
 

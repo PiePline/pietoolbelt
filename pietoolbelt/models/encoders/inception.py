@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-from cv_utils.models.encoders.common import BasicEncoder
+from pietoolbelt.models.encoders.common import BasicEncoder
 
 __all__ = ['InceptionV3Encoder']
 

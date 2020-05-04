@@ -4,4 +4,4 @@ numpy
 tqdm
 torch>=0.4.1
 torchvision
-neural-pipeline
+piepeline

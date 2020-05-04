@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from neural_pipeline import AbstractMetric
+from piepline import AbstractMetric
 
 
 def dice2jaccard(dice_val):

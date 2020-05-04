@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
 
-from cv_utils.metrics.cpu.segmentation import jaccard, dice, multiclass_jaccard, multiclass_dice
-from cv_utils.metrics.common import jaccard2dice, dice2jaccard
+from pietoolbelt.metrics.cpu.segmentation import jaccard, dice, multiclass_jaccard, multiclass_dice
+from pietoolbelt.metrics.common import jaccard2dice, dice2jaccard
 
 __all__ = ['CPUTest']
 

@@ -2,9 +2,9 @@ import unittest
 import torch
 from torch import Tensor
 
-from cv_utils.losses.common import Reduction
-from cv_utils.losses.segmentation import DiceLoss, MulticlassSegmentationLoss
-from cv_utils.metrics.torch.segmentation import dice, multiclass_dice
+from pietoolbelt.losses.common import Reduction
+from pietoolbelt.losses.segmentation import DiceLoss, MulticlassSegmentationLoss
+from pietoolbelt.metrics.torch.segmentation import dice, multiclass_dice
 
 __all__ = ['SegmentationLossesTest']
 

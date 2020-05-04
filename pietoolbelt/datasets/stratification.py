@@ -2,7 +2,7 @@ from random import randint
 import numpy as np
 import os
 
-from cv_utils.datasets.common import BasicDataset
+from pietoolbelt.datasets.common import BasicDataset
 
 
 class DatasetStratification:

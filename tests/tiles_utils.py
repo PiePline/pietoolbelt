@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from cv_utils.tiles_utils import TilesManager
+from pietoolbelt.tiles_utils import TilesManager
 
 
 class BasicEncoderTest(unittest.TestCase):

@@ -3,9 +3,9 @@ import unittest
 
 import torch
 
-from cv_utils.models.encoders.inception import InceptionV3Encoder
-from cv_utils.models.encoders.mobile_net import MobileNetV2Encoder
-from cv_utils.models.encoders.resnet import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
+from pietoolbelt.models.encoders.inception import InceptionV3Encoder
+from pietoolbelt.models.encoders.mobile_net import MobileNetV2Encoder
+from pietoolbelt.models.encoders.resnet import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
 
 __all__ = ['MobileNetV2EncoderTest', 'InceptionV3EncoderTest', 'ResNet18EncoderTest', 'ResNet34EncoderTest', 'ResNet50EncoderTest', 'ResNet101EncoderTest', 'ResNet152EncoderTest']
 

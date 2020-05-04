@@ -2,9 +2,9 @@ import torch
 from torch import Tensor
 from torch.nn import Module
 
-from cv_utils.losses.common import ComposedLoss, Reduction
-from cv_utils.metrics.torch.segmentation import dice, _multiclass_metric, _split_masks_by_classes
-from cv_utils.models.utils import Activation
+from pietoolbelt.losses.common import ComposedLoss, Reduction
+from pietoolbelt.metrics.torch.segmentation import dice, _multiclass_metric, _split_masks_by_classes
+from pietoolbelt.models.utils import Activation
 
 __all__ = ['DiceLoss', 'BCEDiceLoss', 'LovaszSoftmax']
 

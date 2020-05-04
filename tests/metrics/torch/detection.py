@@ -2,7 +2,7 @@ import unittest
 import torch
 from torch import Tensor
 
-from cv_utils.metrics.torch.detection import _calc_boxes_areas, _compute_boxes_iou, f_beta_score, calc_tp_fp_fn
+from pietoolbelt.metrics.torch.detection import _calc_boxes_areas, _compute_boxes_iou, f_beta_score, calc_tp_fp_fn
 
 __all__ = ['PyTorchTest']
 

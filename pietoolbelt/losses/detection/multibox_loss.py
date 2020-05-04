@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
-from train_config.loss import box_utils
+from pietoolbelt.losses.detection import box_utils
 
 
 class MultiboxLoss(nn.Module):

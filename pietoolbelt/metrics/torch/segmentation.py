@@ -1,9 +1,9 @@
 import torch
-from neural_pipeline import AbstractMetric, MetricsProcessor, MetricsGroup
+from piepline import AbstractMetric, MetricsProcessor, MetricsGroup
 from torch import Tensor, nn
 import numpy as np
 
-from cv_utils.models.utils import Activation
+from pietoolbelt.models.utils import Activation
 
 __all__ = ['dice', 'jaccard', 'multiclass_dice', 'multiclass_jaccard',
            'DiceMetric', 'JaccardMetric', 'SegmentationMetricsProcessor',

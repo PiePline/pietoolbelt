@@ -1,7 +1,7 @@
 import unittest
 
-from cv_utils.datasets.utils import DatasetsContainer
-from cv_utils.datasets.common import BasicDataset
+from pietoolbelt.datasets.utils import DatasetsContainer
+from pietoolbelt.datasets.common import BasicDataset
 
 __all__ = ['DatasetsContainerTest']
 

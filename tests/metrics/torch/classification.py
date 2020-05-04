@@ -4,7 +4,7 @@ from sklearn.metrics import roc_auc_score
 from torch import Tensor
 import numpy as np
 
-from cv_utils.metrics.torch.classification import ROCAUCMetric
+from pietoolbelt.metrics.torch.classification import ROCAUCMetric
 
 __all__ = ['PyTorchTest']
 

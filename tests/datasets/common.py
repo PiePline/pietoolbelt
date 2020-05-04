@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from cv_utils.datasets.common import BasicDataset
+from pietoolbelt.datasets.common import BasicDataset
 
 __all__ = ['BasicDatasetTest']
 
@@ -34,7 +34,7 @@ class BasicDatasetTest(unittest.TestCase):
         dataset.set_indices(indices)
         self.assertEqual(dataset.get_items(), expected_res)
         expected_res = [expected_res[i] for i in indices]
-        dataset.set_indices(indices, remove_unused=True)
+        dataset.set_indices(indices).remove_unused_data()
         self.assertEqual(dataset.get_items(), expected_res)
 
         res = []
@@ -51,7 +51,7 @@ class BasicDatasetTest(unittest.TestCase):
         expected_res = list(range(10))
         self.assertEqual(dataset.get_items(), expected_res)
 
-        dataset.load_indices('test_indices.npy', remove_unused=True)
+        dataset.load_indices('test_indices.npy').remove_unused_data()
         expected_res = [expected_res[i] for i in indices]
         self.assertEqual(dataset.get_items(), expected_res)
 

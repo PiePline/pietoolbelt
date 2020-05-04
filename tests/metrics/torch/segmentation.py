@@ -3,9 +3,9 @@ import torch
 from torch import Tensor
 import numpy as np
 
-from cv_utils.metrics.torch.segmentation import jaccard, dice, multiclass_jaccard, multiclass_dice, DiceMetric, MulticlassDiceMetric, \
+from pietoolbelt.metrics.torch.segmentation import jaccard, dice, multiclass_jaccard, multiclass_dice, DiceMetric, MulticlassDiceMetric, \
     JaccardMetric, MulticlassJaccardMetric
-from cv_utils.metrics.common import jaccard2dice, dice2jaccard
+from pietoolbelt.metrics.common import jaccard2dice, dice2jaccard
 
 
 __all__ = ['PyTorchTest']

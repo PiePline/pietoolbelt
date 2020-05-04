@@ -1,4 +1,4 @@
-from cv_utils.models.encoders.common import BasicEncoder
+from pietoolbelt.models.encoders.common import BasicEncoder
 import torch
 import torch.nn.functional as F
 from torch import nn

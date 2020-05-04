@@ -2,7 +2,7 @@ import os
 import numpy as np
 from abc import ABCMeta, abstractmethod
 
-from neural_pipeline import AbstractDataset
+from piepline import AbstractDataset
 
 __all__ = ['DatasetException', 'get_root_by_env', 'AbstractIndexedDataset', 'AbstractDataset', 'IndexedDataset', 'BasicDataset']
 
