@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 with open('requirements.txt', 'r') as req_file:
-    requirements = req_file.readlines()
+    requirements = [r.replace('\n', '') for r in req_file.readlines()]
 
 setuptools.setup(
     name="pietoolbelt",
@@ -28,6 +28,8 @@ setuptools.setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Scientific/Engineering :: Image Recognition',

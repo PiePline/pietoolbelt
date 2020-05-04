@@ -1,7 +1,7 @@
+piepline>=0.2.2
 opencv-python
 scikit-learn
 numpy
 tqdm
 torch>=0.4.1
 torchvision
-piepeline
