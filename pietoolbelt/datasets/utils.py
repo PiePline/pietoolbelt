@@ -1,15 +1,14 @@
 from typing import List, Tuple
 
 import numpy as np
-from pietoolbelt.datasets.common import BasicDataset
+from pietoolbelt.datasets.common import BasicDataset, AbstractDataset
 
 from pietoolbelt.mask_composer import MasksComposer
-from piepline import AbstractDataset
 
 __all__ = ['EmptyClassesAdd', 'AugmentedDataset', 'InstanceSegmentationDataset', 'DatasetsContainer']
 
 
-class EmptyClassesAdd:
+class EmptyClassesAdd(AbstractDataset):
     def __init__(self, dataset, target_classes_num: int, exists_class_idx: int):
         if target_classes_num <= exists_class_idx:
             raise Exception("Target classes number ({}) can't be less or equal than exists class index ({})".format(target_classes_num,
@@ -40,7 +39,7 @@ class EmptyClassesAdd:
         return len(self._dataset)
 
 
-class AugmentedDataset:
+class AugmentedDataset(AbstractDataset):
     def __init__(self, dataset):
         self._dataset = dataset
         self._augs = {}

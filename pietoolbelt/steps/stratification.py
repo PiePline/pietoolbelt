@@ -1,15 +1,19 @@
+from multiprocessing import Pool
 from random import randint
 import numpy as np
 import os
+
+from tqdm import tqdm
 
 from pietoolbelt.datasets.common import BasicDataset
 
 
 class DatasetStratification:
-    def __init__(self, dataset: BasicDataset, calc_target_label: callable):
+    def __init__(self, dataset: BasicDataset, calc_target_label: callable, workers_num: int = 1):
         self._dataset = dataset
         self._calc_label = calc_target_label
         self._progress_clbk = None
+        self._workers_num = workers_num
 
     @staticmethod
     def __fill_hist(target_hist: [], indices: {}):
@@ -28,13 +32,20 @@ class DatasetStratification:
         return res
 
     def calc_hist(self, dataset: BasicDataset):
-        indices = {}
-        for i, d in enumerate(dataset):
-            indices[i] = self._calc_label(d['target'])
+        labels = []
 
-        hist = [[] for i in range(max(indices.values()))]
-        for data, idxes in indices.items():
-            hist[idxes - 1].append(data)
+        if self._workers_num > 1:
+            with Pool(self._workers_num) as pool, tqdm(total=len(dataset)) as pbar:
+                for label in pool.imap(self._calc_label, (d['target'] for d in dataset), chunksize=self._workers_num * 10):
+                    labels.append(label)
+                    pbar.update()
+        else:
+            for d in tqdm(dataset, total=len(dataset)):
+                labels.append(self._calc_label(d['target']))
+
+        hist = [[] for _ in range(max(labels))]
+        for i, idxes in enumerate(labels):
+            hist[idxes - 1].append(i)
         return np.array([len(v) for v in hist]), hist
 
     def stratificate_dataset(self, hist: np.ndarray, indices: {}, parts: [float]) -> []:
