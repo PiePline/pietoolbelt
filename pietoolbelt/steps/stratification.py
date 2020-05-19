@@ -48,11 +48,12 @@ class DatasetStratification:
             hist[idxes - 1].append(i)
         return np.array([len(v) for v in hist]), hist
 
-    def stratificate_dataset(self, hist: np.ndarray, indices: {}, parts: [float]) -> []:
+    def stratificate_dataset(self, hist: np.ndarray, indices: list, parts: [float]) -> []:
         res = []
-        for part in parts:
+        for part in parts[:len(parts) - 1]:
             target_hist = (hist.copy() * part).astype(np.uint32)
             res.append([target_hist, self.__fill_hist(target_hist, indices)])
+        res.append([np.array([len(i) for i in indices]).astype(np.uint32), {i: v for i, v in enumerate(indices)}])
         return res
 
     @staticmethod
