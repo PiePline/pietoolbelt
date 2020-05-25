@@ -25,7 +25,18 @@ class ColormapVisualizer(SegmentationVisualizer):
 
     def process_img(self, image, mask) -> np.ndarray:
         heatmap_img = cv2.applyColorMap(mask, self._colormap)
-        return cv2.addWeighted(heatmap_img, self._proportions[1], image, self._proportions[0], 0)
+        res = cv2.addWeighted(heatmap_img, self._proportions[1], image, self._proportions[0], 0)
+
+        if len(image.shape) > 2:
+            res[:, :, 0] = np.where(mask > 0, res[:, :, 0], image[:, :, 0])
+            res[:, :, 1] = np.where(mask > 0, res[:, :, 1], image[:, :, 1])
+            res[:, :, 2] = np.where(mask > 0, res[:, :, 2], image[:, :, 2])
+        else:
+            res[:, :, 0] = np.where(mask > 0, res[:, :, 0], image[:, :])
+            res[:, :, 1] = np.where(mask > 0, res[:, :, 1], image[:, :])
+            res[:, :, 2] = np.where(mask > 0, res[:, :, 2], image[:, :])
+
+        return res
 
 
 class ContourVisualizer(SegmentationVisualizer):
