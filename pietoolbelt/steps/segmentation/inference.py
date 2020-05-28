@@ -85,8 +85,8 @@ class SegmentationInference:
     def vis_result(self, image: np.ndarray, mask: np.ndarray) -> np.ndarray:
         return self._vis.process_img(cv2.cvtColor(image, cv2.COLOR_RGB2BGR), mask)
 
-    def run_webcam(self, title: str = 'Inference'):
-        cap = cv2.VideoCapture(0)
+    def run_webcam(self, title: str = 'Inference', device_id: int = 0):
+        cap = cv2.VideoCapture(device_id)
         cv2.namedWindow(title, cv2.WINDOW_GUI_NORMAL)
 
         while cv2.waitKey(1) & 0xFF != ord('q'):

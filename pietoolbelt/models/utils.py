@@ -1,3 +1,5 @@
+from typing import List
+
 import torch
 from torch import nn
 from torch.nn import Module
@@ -63,3 +65,20 @@ class ClassificationModel(Module):
         data = self._pool(data)
         data = data.view(data.size(0), -1)
         return self.fc(data)
+
+
+class ModelContainer(Module):
+    def __init__(self, models: List[Module], reduction: callable):
+        super().__init__()
+
+        self._models_names = []
+        for i, model in enumerate(models):
+            attr_name = "model_{}".format(i)
+            setattr(self, attr_name, model)
+            self._models_names.append(attr_name)
+
+        self._reduction = reduction
+
+    def forward(self, *args, **kwargs):
+        results = [getattr(self, attr_name)(*args, **kwargs) for attr_name in self._models_names]
+        return self._reduction(torch.stack(results, dim=0))
