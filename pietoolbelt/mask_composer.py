@@ -58,6 +58,8 @@ class MasksComposer:
             else:
                 self._masks[cls] += mask
 
+        self._masks[cls][self._masks[cls] > 1] = 1
+
     def compose(self) -> np.ndarray:
         res = None
         for cls, mask in self._masks.items():
