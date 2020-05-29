@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch.nn import Module
 
-__all__ = ['ClassificationModel', 'ModelWithActivation', 'Activation', 'calc_model_params_num']
+__all__ = ['ClassificationModel', 'ModelWithActivation', 'Activation', 'ModelsContainer', 'calc_model_params_num']
 
 
 class Activation(Module):
@@ -67,7 +67,7 @@ class ClassificationModel(Module):
         return self.fc(data)
 
 
-class ModelContainer(Module):
+class ModelsContainer(Module):
     def __init__(self, models: List[Module], reduction: callable):
         super().__init__()
 
