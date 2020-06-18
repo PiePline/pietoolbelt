@@ -21,9 +21,12 @@ class ComposedLoss(Module):
     def _multiply_coeff_with_exp(loss_val, weight):
         return torch.exp(-weight) * loss_val + weight
 
-    def enable_learn_coeffs(self, strategy: str = 'exp'):
+    def enable_learn_coeffs(self, strategy: str = 'exp', device: str = None):
         for i, c in enumerate(self._coeffs):
-            self._coeffs[i] = torch.nn.Parameter(torch.tensor([c], dtype=torch.float32), requires_grad=True)
+            if device is None:
+                self._coeffs[i] = torch.tensor([c], dtype=torch.float32, requires_grad=True)
+            else:
+                self._coeffs[i] = torch.tensor([c], dtype=torch.float32, requires_grad=True, device=device)
 
         if strategy == 'exp':
             self._apply_weight = self._multiply_coeff_with_exp

@@ -17,4 +17,4 @@ class PredictStep:
             predict = np.squeeze(predict.detach().cpu().numpy())
 
             with open(os.path.join(out_path, '{}.npy'.format(i)), 'w') as predict_file:
-                np.save(predict.astype(np.float32))
+                np.save(predict_file, predict.astype(np.float32))
