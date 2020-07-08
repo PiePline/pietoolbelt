@@ -46,10 +46,10 @@ class Reduction:
         super().__init__()
 
         if method == 'sum':
-            self._reduction = lambda x: torch.sum(x, 0)
+            self._reduction = lambda x: x.sum(0)
             self._list_reduction = lambda x: sum(x)
         elif method == 'mean':
-            self._reduction = lambda x: torch.mean(x, 0)
+            self._reduction = lambda x: x.sum(0)
             self._list_reduction = lambda x: sum(x) / len(x)
         else:
             raise Exception("Unexpected reduction '{}'. Possible values: [sum, mean]".format(method))
