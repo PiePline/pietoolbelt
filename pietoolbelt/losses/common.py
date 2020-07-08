@@ -37,12 +37,8 @@ class ComposedLoss(Module):
         return self._coeffs
 
     def forward(self, *args, **kwargs):
-        res = 0
-
-        for l, c in zip(self._losses, self._coeffs):
-            res += self._apply_weight(l(*args, **kwargs), c)
-
-        return res
+        res = [self._apply_weight(l(*args, **kwargs), c) for l, c in zip(self._losses, self._coeffs)]
+        return sum(res)
 
 
 class Reduction:
@@ -50,11 +46,17 @@ class Reduction:
         super().__init__()
 
         if method == 'sum':
-            self._reduction = lambda x: x.sum(0)
+            self._reduction = lambda x: torch.sum(x, 0)
+            self._list_reduction = lambda x: sum(x)
         elif method == 'mean':
-            self._reduction = lambda x: x.mean(0)
+            self._reduction = lambda x: torch.mean(x, 0)
+            self._list_reduction = lambda x: sum(x) / len(x)
         else:
             raise Exception("Unexpected reduction '{}'. Possible values: [sum, mean]".format(method))
 
     def __call__(self, data):
-        return self._reduction(data)
+        return self._reduction(data).unsqueeze(0)
+
+    def reduct_list(self, data):
+        return self._list_reduction(data).unsqueeze(0)
+

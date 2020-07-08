@@ -44,7 +44,7 @@ class BCEDiceLoss(ComposedLoss):
         if class_weights is None:
             bce_loss = torch.nn.BCELoss()
         else:
-            bce_loss = torch.nn.BCELoss(torch.Tensor(class_weights))
+            bce_loss = torch.nn.BCELoss(torch.tensor(class_weights))
         dice_loss = DiceLoss(eps=eps, activation=activation, reduction=reduction)
 
         super().__init__([bce_loss, dice_loss], [bce_w, dice_w])
@@ -65,10 +65,10 @@ class MulticlassSegmentationLoss(Module):
         self._reduction = reduction
 
     def forward(self, output: Tensor, target: Tensor):
-        res = torch.zeros((output.size(1)), dtype=output.dtype)
+        res = []
         for i, [p, t] in enumerate(_split_masks_by_classes(output, target)):
-            res[i] = self._base_loss(torch.squeeze(p, dim=1), torch.squeeze(t, dim=1))
-        return self._reduction(res)
+            res.append(self._base_loss(p, t))
+        return self._reduction.reduct_list(res)
 
 
 class LovaszSoftmax(torch.nn.Module):
