@@ -1,6 +1,6 @@
 import numpy as np
 
-__all__ = ['mask2rle', 'rle2mask']
+__all__ = ['mask2rle', 'rle2mask', 'put_to_dict', 'get_from_dict']
 
 
 def mask2rle(img: np.ndarray):
@@ -37,3 +37,19 @@ def generate_folds_names(folds_num: int) -> list:
         fold_indices = fold_indices[-1:] + fold_indices[:-1]
         folds.append({'train': ['fold_{}.npy'.format(i) for i in fold_indices[1:]], 'val': 'fold_{}.npy'.format(fold_indices[0])})
     return folds
+
+
+def put_to_dict(dict_obj: dict, path: list, obj: any) -> dict:
+    cur = dict_obj
+    for p in path:
+        if p not in cur:
+            cur[p] = obj
+        cur = cur[p]
+    return dict_obj
+
+
+def get_from_dict(dict_obj: dict, path: list) -> any:
+    res = dict_obj
+    for p in path:
+        res = res[p]
+    return res

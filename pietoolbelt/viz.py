@@ -3,22 +3,25 @@ from abc import ABCMeta, abstractmethod
 import cv2
 import numpy as np
 
-__all__ = ['SegmentationVisualizer', 'ColormapVisualizer', 'MulticlassColormapVisualizer']
+__all__ = ['AbstractVisualizer', 'ColormapVisualizer', 'MulticlassColormapVisualizer', 'DetectionVisualiser']
 
 
-class SegmentationVisualizer(metaclass=ABCMeta):
+class AbstractVisualizer(metaclass=ABCMeta):
     @abstractmethod
-    def process_img(self, image, mask) -> np.ndarray:
+    def process_img(self, image: np.ndarray, target: any) -> np.ndarray:
         """
-        Combine image and mask into rgb image to visualize
+        Visualize target on image
 
-        :param image: image
-        :param mask: mask
-        :return: new image
+        Args:
+            image: image array with shape (C, H, W)
+            target: target object
+
+        Returns:
+            image
         """
 
 
-class ColormapVisualizer(SegmentationVisualizer):
+class ColormapVisualizer(AbstractVisualizer):
     def __init__(self, proportions: [float, float], colormap=cv2.COLORMAP_JET):
         self._proportions = proportions
         self._colormap = colormap
@@ -39,7 +42,7 @@ class ColormapVisualizer(SegmentationVisualizer):
         return res
 
 
-class ContourVisualizer(SegmentationVisualizer):
+class ContourVisualizer(AbstractVisualizer):
     def __init__(self, thickness: int = 1, color: tuple = (0, 255, 0)):
         self._thick = thickness
         self._color = color
@@ -71,3 +74,11 @@ class MulticlassColormapVisualizer(ColormapVisualizer):
             img[:, :, 1][cls > 0] = self._other_colors[1][i]
             img[:, :, 2][cls > 0] = self._other_colors[2][i]
         return img
+
+
+class DetectionVisualiser(AbstractVisualizer):
+    def process_img(self, image: np.ndarray, target: any) -> np.ndarray:
+        res = image.copy()
+        for bbox in target:
+            res = cv2.rectangle(res, (bbox[0], bbox[1]), (bbox[0] + bbox[2], bbox[1] + bbox[3]), (255, 0, 0), 2)
+        return res

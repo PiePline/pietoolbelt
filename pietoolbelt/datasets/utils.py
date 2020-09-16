@@ -4,8 +4,9 @@ import numpy as np
 from pietoolbelt.datasets.common import BasicDataset, AbstractDataset
 
 from pietoolbelt.mask_composer import MasksComposer
+from pietoolbelt.utils import put_to_dict, get_from_dict
 
-__all__ = ['EmptyClassesAdd', 'AugmentedDataset', 'InstanceSegmentationDataset', 'DatasetsContainer']
+__all__ = ['EmptyClassesAdd', 'AugmentedDataset', 'InstanceSegmentationDataset', 'DatasetsContainer', 'DataFlow']
 
 
 class EmptyClassesAdd(AbstractDataset):
@@ -111,6 +112,7 @@ class DatasetsContainer(BasicDataset):
     Args:
         datasets (list): list of datasets for unite
     """
+
     def __init__(self, datasets: [AbstractDataset]):
         self._datasets = datasets
         items = self._update_datasets_idx_space(datasets)
@@ -129,3 +131,29 @@ class DatasetsContainer(BasicDataset):
 
     def _interpret_item(self, item) -> any:
         return self._datasets[item[0]][item[1]]
+
+
+class DataFlow(AbstractDataset):
+    def __init__(self, dataset: BasicDataset):
+        self._dataset = dataset
+        self._swap = []
+
+    def swap(self, src: List[str], dst: List[str]) -> 'DataFlow':
+        self._swap.append({'src': src, 'dst': dst})
+        return self
+
+    def __getitem__(self, item):
+        src = self._dataset[item]
+        result = {}
+
+        for s in self._swap:
+            try:
+                result = put_to_dict(result, s['dst'], get_from_dict(src, s['src']))
+            except KeyError as err:
+                raise KeyError("Can't find path from dataset with source: [{}] and dst: [{}]."
+                               "Error message: [{}]".format(s['src'], s['dst'], err))
+
+        return result
+
+    def __len__(self):
+        return len(self._dataset)
