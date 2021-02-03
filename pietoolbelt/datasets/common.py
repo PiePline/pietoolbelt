@@ -2,9 +2,9 @@ import os
 import numpy as np
 from abc import ABCMeta, abstractmethod
 
-from piepline import AbstractDataset
+from piepline.data_producer import AbstractDataset
 
-__all__ = ['DatasetException', 'get_root_by_env', 'AbstractIndexedDataset', 'AbstractDataset', 'IndexedDataset', 'BasicDataset']
+__all__ = ['DatasetException', 'get_root_by_env', 'AbstractIndexedDataset', 'IndexedDataset', 'BasicDataset']
 
 
 class DatasetException(Exception):

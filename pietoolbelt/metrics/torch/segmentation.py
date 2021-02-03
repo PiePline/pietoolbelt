@@ -1,5 +1,6 @@
 import torch
-from piepline import AbstractMetric, MetricsProcessor, MetricsGroup
+from piepline.train_config.metrics import AbstractMetric, MetricsGroup
+from piepline.train_config.metrics_processor import MetricsProcessor
 from torch import Tensor, nn
 import numpy as np
 
@@ -116,7 +117,7 @@ class _SegmentationMetric(AbstractMetric):
             self.tensor_preproc = lambda x: self._thresh(x, threshold)
 
     def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
-        return np.squeeze(self._func(self._activation(output), target, self._eps).cpu().numpy())
+        return np.squeeze(self._func(self._activation(output), target, self._eps).detach().cpu().numpy())
 
     @staticmethod
     def _thresh(output: Tensor, thresh) -> Tensor:

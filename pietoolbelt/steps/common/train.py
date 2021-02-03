@@ -1,7 +1,7 @@
 import json
 import os
 
-from piepline import FileStructManager
+from piepline.utils.fsm import FileStructManager
 
 
 class FoldedTrainer:

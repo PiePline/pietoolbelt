@@ -1,6 +1,7 @@
 import unittest
+import numpy as np
 
-from pietoolbelt.utils import get_from_dict, put_to_dict
+from pietoolbelt.utils import get_from_dict, put_to_dict, mask2rle, rle2mask
 
 
 class UtilsTest(unittest.TestCase):
@@ -18,3 +19,11 @@ class UtilsTest(unittest.TestCase):
 
         self.assertEqual(put_to_dict(d, ['a', 'b', 'e'], 8), {'a': {'b': {'c': 4, 'e': 8}, 'd': {'dd'}}})
         self.assertEqual(d, {'a': {'b': {'c': 4, 'e': 8}, 'd': {'dd'}}})
+
+    def test_rle(self):
+        mask = np.zeros((512, 256), dtype=np.uint8)
+        mask[23: 76, 56: 78] = 255
+
+        rle = mask2rle(mask)
+        new_mask = rle2mask([int(v) for v in rle.split(' ')], (512, 256))
+        self.assertTrue(np.equal(mask, new_mask))

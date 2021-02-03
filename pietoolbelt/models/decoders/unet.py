@@ -1,8 +1,11 @@
-from pietoolbelt.models.encoders.common import BasicEncoder
 import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.nn import Module
+
+from pietoolbelt.models.encoders.common import BasicEncoder
+
+__all__ = ['UNetDecoder']
 
 
 class ConvBottleneck(nn.Module):
@@ -41,12 +44,15 @@ class UNetDecoder(Module):
 
         decoder_stages = []
         for idx, param in enumerate(params[1:]):
-            decoder_stages.append(UNetDecoderBlock(param['filter_size'], params[max(idx, 0)]['filter_size'], param['kernel_size'], param['stride'], param['stride']))
+            decoder_stages.append(
+                UNetDecoderBlock(param['filter_size'], params[max(idx, 0)]['filter_size'], param['kernel_size'], param['stride'],
+                                 param['stride']))
         self.decoder_stages = nn.ModuleList(decoder_stages)
 
         self.bottlenecks = nn.ModuleList([ConvBottleneck(p['filter_size'] * 2, p['filter_size']) for p in reversed(params[:-1])])
 
-        self.last_upsample = UNetDecoderBlock(params[0]['filter_size'], params[0]['filter_size'], params[0]['kernel_size'], params[0]['stride'], params[0]['padding'])
+        self.last_upsample = UNetDecoderBlock(params[0]['filter_size'], params[0]['filter_size'], params[0]['kernel_size'],
+                                              params[0]['stride'], params[0]['padding'])
         self.final = nn.Conv2d(params[0]['filter_size'], classes_num, 3, padding=1)
 
     def forward(self, data):
