@@ -1,4 +1,4 @@
-__version__ = '0.3.2'
+__version__ = '0.3.6'
 
 from . import datasets
 from . import losses
