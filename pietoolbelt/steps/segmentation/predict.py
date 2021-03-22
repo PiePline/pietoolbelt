@@ -10,7 +10,7 @@ class PredictStep:
         self._predictor = predictor
 
     def run(self, dataset: AbstractDataset, out_path: str):
-        if os.path.exists(out_path):
+        if not os.path.exists(out_path):
             os.makedirs(out_path)
 
         for i, dat in enumerate(dataset):
