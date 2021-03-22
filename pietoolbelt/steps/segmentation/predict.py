@@ -1,7 +1,8 @@
 import os
 
 import numpy as np
-from piepline import Predictor, AbstractDataset
+from piepline.data_producer import AbstractDataset
+from piepline.predict import Predictor
 
 
 class PredictStep:
