@@ -1,8 +1,10 @@
 import torch
-from piepline import AbstractMetric, MetricsProcessor, MetricsGroup
+from piepline.train_config.metrics import AbstractMetric, MetricsGroup
+from piepline.train_config.metrics_processor import MetricsProcessor
 from torch import Tensor, nn
 import numpy as np
 
+from pietoolbelt.losses.common import Reduction
 from pietoolbelt.models.utils import Activation
 
 __all__ = ['dice', 'jaccard', 'multiclass_dice', 'multiclass_jaccard',
@@ -68,7 +70,7 @@ def jaccard(pred: Tensor, target: Tensor, eps: float = 1e-7) -> Tensor:
 def _multiclass_metric(func: callable, pred, target) -> Tensor:
     res = torch.zeros((pred.shape[1], pred.shape[0]), dtype=pred.dtype)
     for i, [p, t] in enumerate(_split_masks_by_classes(pred, target)):
-        res[i] = func(torch.squeeze(p, dim=1), torch.squeeze(t, dim=1))
+        res[i] = func(p, t)
     return res
 
 
@@ -115,7 +117,7 @@ class _SegmentationMetric(AbstractMetric):
             self.tensor_preproc = lambda x: self._thresh(x, threshold)
 
     def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
-        return np.squeeze(self._func(self._activation(output), target, self._eps).cpu().numpy())
+        return np.squeeze(self._func(self._activation(output), target, self._eps).detach().cpu().numpy())
 
     @staticmethod
     def _thresh(output: Tensor, thresh) -> Tensor:
@@ -133,21 +135,13 @@ class _SegmentationMetric(AbstractMetric):
 
 
 class MulticlassSegmentationMetric(_SegmentationMetric):
-    def __init__(self, name: str, func: callable, activation: str = None, reduction: str = None):
+    def __init__(self, name: str, func: callable, activation: str = None, reduction: Reduction = Reduction('mean')):
         super().__init__(name, func, activation)
-
-        if reduction is None:
-            self._reduction = lambda x: x
-        elif reduction == 'sum':
-            self._reduction = lambda x: x.sum(0)
-        elif reduction == 'mean':
-            self._reduction = lambda x: x.mean(0)
-        else:
-            raise Exception("Unexpected reduction '{}'. Possible values: [sum, mean]".format(reduction))
+        self._reduction = reduction
 
     def calc(self, output: Tensor, target: Tensor) -> np.ndarray:
-        res = np.squeeze(self._func(self._activation(output), target).data.cpu().numpy())
-        return self._reduction(res)
+        res = self._func(self._activation(output), target)
+        return np.squeeze(self._reduction(res).data.cpu().numpy())
 
 
 class DiceMetric(_SegmentationMetric):
@@ -173,17 +167,17 @@ class SegmentationMetricsProcessor(MetricsProcessor):
 
 
 class MulticlassDiceMetric(MulticlassSegmentationMetric):
-    def __init__(self, activation: str = None, reduction: str = 'sum'):
+    def __init__(self, activation: str = None, reduction: Reduction = Reduction('mean')):
         super().__init__('dice', func=multiclass_dice, activation=activation, reduction=reduction)
 
 
 class MulticlassJaccardMetric(MulticlassSegmentationMetric):
-    def __init__(self, activation: str = None, reduction: str = 'sum'):
+    def __init__(self, activation: str = None, reduction: Reduction = Reduction('mean')):
         super().__init__('jaccard', func=multiclass_jaccard, activation=activation, reduction=reduction)
 
 
 class MulticlassSegmentationMetricsProcessor(MetricsProcessor):
-    def __init__(self, stage_name: str, activation: str = None, reduction: str = 'sum'):
+    def __init__(self, stage_name: str, activation: str = None, reduction: Reduction = Reduction('mean')):
         super().__init__()
         self.add_metrics_group(MetricsGroup(stage_name).add(MulticlassJaccardMetric(activation=activation, reduction=reduction))
                                .add(MulticlassDiceMetric(activation=activation, reduction=reduction)))

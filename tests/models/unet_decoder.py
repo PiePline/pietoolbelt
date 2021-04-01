@@ -35,12 +35,16 @@ class BasicUnetTest(unittest.TestCase):
                             try:
                                 encoder = self._init_unet(in_channels=in_channels, classes_num=classes_num)
                                 res = encoder(torch.rand((batch_size, in_channels, img_size, img_size)))
-                                self.assertEqual(res.size(), self._get_out_size_by_input_size(batch_size, classes_num, img_size, img_size))
+                                self.assertEqual(res.size(),
+                                                 self._get_out_size_by_input_size(batch_size, classes_num, img_size, img_size))
                                 if img_size // 2 >= self._min_img_size:
                                     res = encoder(torch.rand((batch_size, in_channels, img_size // 2, img_size)))
-                                    self.assertEqual(res.size(), self._get_out_size_by_input_size(batch_size, classes_num, img_size // 2, img_size))
+                                    self.assertEqual(res.size(),
+                                                     self._get_out_size_by_input_size(batch_size, classes_num, img_size // 2,
+                                                                                      img_size))
                                     res = encoder(torch.rand((batch_size, in_channels, img_size, img_size // 2)))
-                                    self.assertEqual(res.size(), self._get_out_size_by_input_size(batch_size, classes_num, img_size, img_size // 2))
+                                    self.assertEqual(res.size(), self._get_out_size_by_input_size(batch_size, classes_num, img_size,
+                                                                                                  img_size // 2))
                             except:
                                 self.fail("Encoder doesn't pass correct data")
 
@@ -135,6 +139,19 @@ class MobileNetV2DecoderTest(BasicUnetTest):
 
     def _init_unet(self, in_channels: int, classes_num: int):
         return UNetDecoder(MobileNetV2Encoder(in_channels), classes_num=classes_num)
+
+    @staticmethod
+    def _get_out_size_by_input_size(batch_size, classes_num, img_size_x, img_size_y):
+        return torch.Size([batch_size, classes_num, img_size_x, img_size_y])
+
+
+class InceptionV3EncoderDecoderTest(BasicUnetTest):
+    _min_img_size = 64
+    _name = "InceptionV3Encoder"
+    _layers_num = 7
+
+    def _init_unet(self, in_channels: int, classes_num: int):
+        return UNetDecoder(InceptionV3Encoder(in_channels), classes_num=classes_num)
 
     @staticmethod
     def _get_out_size_by_input_size(batch_size, classes_num, img_size_x, img_size_y):
