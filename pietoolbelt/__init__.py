@@ -8,4 +8,4 @@ from . import img_matcher
 from . import viz
 from . import mask_composer
 from . import utils
-from . import steps
+from . import pipeline

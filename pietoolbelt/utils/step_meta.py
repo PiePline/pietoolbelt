@@ -2,6 +2,8 @@ import json
 import os
 from typing import List
 
+__all__ = ['StepMeta']
+
 
 class StepMeta:
     def __init__(self, path: str):

@@ -4,8 +4,10 @@ import numpy as np
 from piepline.data_producer import DataProducer, AbstractDataset
 from piepline.predict import Predictor
 
+__all__ = ['SegmentationPredict']
 
-class PredictStep:
+
+class SegmentationPredict:
     def __init__(self, predictor: Predictor):
         self._predictor = predictor
 
@@ -13,7 +15,7 @@ class PredictStep:
         if not os.path.exists(out_path):
             os.makedirs(out_path)
 
-        dp = DataProducer(dataset, batch_size=batch_size, num_workers=workers_num).global_shuffle(False).\
+        dp = DataProducer(dataset, batch_size=batch_size, num_workers=workers_num).global_shuffle(False). \
             pass_indices(need_pass=True).get_loader()
 
         for dat in dp:

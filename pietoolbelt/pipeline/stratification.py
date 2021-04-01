@@ -1,19 +1,56 @@
+import json
 from multiprocessing import Pool
 from random import randint
+from typing import List
+
 import numpy as np
 import os
 
 from tqdm import tqdm
 
 from pietoolbelt.datasets.common import BasicDataset
+from pietoolbelt.pipeline.abstract_step import AbstractStep, DatasetInPipeline, AbstractStepDirResult
+
+
+class StratificationResult(AbstractStepDirResult):
+    def __init__(self, path: str):
+        super().__init__(path)
+        self._meta_file = os.path.join(path, 'meta.json')
+
+        if os.path.exists(self._meta_file):
+            with open(self._meta_file, 'r') as meta_file:
+                self._meta = json.load(meta_file)
+        else:
+            self._meta = dict()
+
+        self._name2file = lambda name: name + '.npy' if len(name) > 4 and name[-4:] != '.npy' else name
+
+    def add_indices(self, indices: List[np.ndarray], name: str, dataset: BasicDataset):
+        dataset.set_indices(indices).flush_indices(os.path.join(self._path, self._name2file(name)))
+
+        self._meta[name] = {'indices_num': len(indices)}
+
+        with open(self._meta_file, 'w') as meta_file:
+            json.dump(self._meta, meta_file)
+
+    def get_indices(self, name: str) -> List[np.ndarray]:
+        file_path = os.path.join(self._path, self._name2file(name))
+        if not os.path.exists(file_path):
+            raise RuntimeError('Indices file doesnt exists [{}]'.format(file_path))
+
+        return np.load(file_path)
+
+    def get_output_paths(self) -> List[str]:
+        return [self._path]
 
 
 class DatasetStratification:
-    def __init__(self, dataset: BasicDataset, calc_target_label: callable, workers_num: int = 1):
+    def __init__(self, dataset: BasicDataset, calc_target_label: callable, result: StratificationResult, workers_num: int = 1):
         self._dataset = dataset
         self._calc_label = calc_target_label
         self._progress_clbk = None
         self._workers_num = workers_num
+        self._result = result
 
     @staticmethod
     def __fill_hist(target_hist: [], indices: {}):
@@ -71,7 +108,7 @@ class DatasetStratification:
 
     def _flush_indices(self, indices: [], part_indices: [], path: str):
         inner_indices = [part_indices[it] for bin in indices[1].values() for it in bin]
-        self._dataset.set_indices(inner_indices).flush_indices(path)
+        self._result.add_indices(inner_indices, path, self._dataset)
         return inner_indices
 
     def run(self, parts: {str: float}, out_dir_path: str) -> None:
@@ -91,3 +128,9 @@ class DatasetStratification:
             indices_to_check.append(self._flush_indices(cur_indices, part_indices, os.path.join(out_dir_path, pathes[i])))
 
         self.check_indices_for_intersection(indices_to_check)
+
+
+class PipelineDatasetStratification(DatasetStratification, AbstractStep):
+    def __init__(self, dataset: DatasetInPipeline, calc_target_label: callable, result: StratificationResult, workers_num: int = 1):
+        DatasetStratification.__init__(self, dataset, calc_target_label, result=result, workers_num=workers_num)
+        AbstractStep.__init__(self, input_results=[dataset], output_res=result)
