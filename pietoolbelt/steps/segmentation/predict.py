@@ -1,16 +1,15 @@
 import os
 
 import numpy as np
-from piepline.data_producer import DataProducer
+from piepline.data_producer import DataProducer, AbstractDataset
 from piepline.predict import Predictor
 
 
 class PredictStep:
     def __init__(self, predictor: Predictor):
         self._predictor = predictor
-        self._predictor.data_processor()
 
-    def run(self, dataset: DataProducer, out_path: str, batch_size: int = 1, workers_num: int = 0):
+    def run(self, dataset: AbstractDataset, out_path: str, batch_size: int = 1, workers_num: int = 0):
         if not os.path.exists(out_path):
             os.makedirs(out_path)
 
