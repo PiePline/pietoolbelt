@@ -15,7 +15,7 @@ class AbstractStepResult(metaclass=ABCMeta):
         """
 
 
-class AbstractStepDirResult(metaclass=ABCMeta, AbstractStepResult):
+class AbstractStepDirResult(AbstractStepResult, metaclass=ABCMeta):
     def __init__(self, path: str):
         self._path = path
 
