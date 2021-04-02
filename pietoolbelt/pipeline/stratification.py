@@ -73,12 +73,12 @@ class DatasetStratification:
 
         if self._workers_num > 1:
             with Pool(self._workers_num) as pool, tqdm(total=len(dataset)) as pbar:
-                for label in pool.imap(self._calc_label, (d['target'] for d in dataset), chunksize=self._workers_num * 10):
+                for label in pool.imap(self._calc_label, dataset.get_items(), chunksize=self._workers_num * 10):
                     labels.append(label)
                     pbar.update()
         else:
-            for d in tqdm(dataset, total=len(dataset)):
-                labels.append(self._calc_label(d['target']))
+            for d in tqdm(dataset.get_items(), total=len(dataset)):
+                labels.append(self._calc_label(d))
 
         hist = [[] for _ in range(max(labels))]
         for i, idxes in enumerate(labels):
@@ -111,9 +111,9 @@ class DatasetStratification:
         self._result.add_indices(inner_indices, path, self._dataset)
         return inner_indices
 
-    def run(self, parts: {str: float}, out_dir_path: str) -> None:
-        if not os.path.exists(out_dir_path):
-            raise Exception("Output dir doesn't exist '{}'".format(out_dir_path))
+    def run(self, parts: {str: float}) -> None:
+        if sum(parts.values()) > 1:
+            raise RuntimeError("Sum of target parts greater than 1")
 
         hist, indices = self.calc_hist(self._dataset)
 
@@ -125,7 +125,9 @@ class DatasetStratification:
 
         indices_to_check = []
         for i, cur_indices in enumerate(stratificated_indices):
-            indices_to_check.append(self._flush_indices(cur_indices, part_indices, os.path.join(out_dir_path, pathes[i])))
+            indices_to_check.append(self._flush_indices(cur_indices, part_indices, pathes[i]))
+
+        self._dataset.remove_indices()
 
         self.check_indices_for_intersection(indices_to_check)
 
