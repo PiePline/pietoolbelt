@@ -13,8 +13,8 @@ from pietoolbelt.pipeline.abstract_step import AbstractStep, DatasetInPipeline, 
 
 
 class StratificationResult(AbstractStepDirResult):
-    def __init__(self, path: str):
-        super().__init__(path)
+    def __init__(self, path: str, allow_exist=False):
+        super().__init__(path, allow_exist=allow_exist)
         self._meta_file = os.path.join(path, 'meta.json')
 
         if os.path.exists(self._meta_file):
@@ -23,9 +23,9 @@ class StratificationResult(AbstractStepDirResult):
         else:
             self._meta = dict()
 
-        self._name2file = lambda name: name + '.npy' if len(name) > 4 and name[-4:] != '.npy' else name
+        self._name2file = lambda name: name + '.npy' if len(name) < 4 or name[-4:] != '.npy' else name
 
-    def add_indices(self, indices: List[np.ndarray], name: str, dataset: BasicDataset):
+    def add_indices(self, indices: List[np.uint], name: str, dataset: BasicDataset):
         dataset.set_indices(indices).flush_indices(os.path.join(self._path, self._name2file(name)))
 
         self._meta[name] = {'indices_num': len(indices)}
@@ -45,7 +45,7 @@ class StratificationResult(AbstractStepDirResult):
 
 
 class DatasetStratification:
-    def __init__(self, dataset: BasicDataset, calc_target_label: callable, result: StratificationResult, workers_num: int = 1):
+    def __init__(self, dataset: BasicDataset, calc_target_label: callable, result: StratificationResult, workers_num: int = 0):
         self._dataset = dataset
         self._calc_label = calc_target_label
         self._progress_clbk = None

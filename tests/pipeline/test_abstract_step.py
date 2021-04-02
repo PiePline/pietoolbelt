@@ -24,6 +24,13 @@ class AbstractStepTest(unittest.TestCase):
             def run(self):
                 self.result = 'result'
 
-        step = StepMock(output_res=AbstractStepTest._StepMock(), input_results=[AbstractStepTest._StepMock()])
+        output_res = AbstractStepTest._StepMock()
+        input_results = [AbstractStepTest._StepMock()]
+        step = StepMock(output_res=output_res, input_results=input_results)
         step.run()
+
         self.assertEqual(step.result, 'result')
+        self.assertIs(step.get_output_res(), output_res)
+
+        for i, inp_res in enumerate(step.get_input_results()):
+            self.assertIs(inp_res, input_results[i])
