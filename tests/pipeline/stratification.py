@@ -36,8 +36,9 @@ class StratificationResultTest(unittest.TestCase):
             self.fail("Can't instantiate StratificationResult class")
 
     def test_dir_creation(self):
-        StratificationResult(path=StratificationResultTest.RESULT_DIR)
+        result = StratificationResult(path=StratificationResultTest.RESULT_DIR)
         self.assertTrue(os.path.exists(StratificationResultTest.RESULT_DIR))
+        self.assertEqual(result.get_output_paths(), [StratificationResultTest.RESULT_DIR])
 
         with self.assertRaises(Exception):
             StratificationResult(path=StratificationResultTest.RESULT_DIR)
