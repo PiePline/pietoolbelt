@@ -4,6 +4,9 @@ from typing import List
 
 from piepline.utils.fsm import FileStructManager
 
+from pietoolbelt.pipeline.abstract_step import AbstractStep, AbstractStepResult
+from pietoolbelt.pipeline.stratification import StratificationResult
+
 
 class FoldedTrainer:
     def __init__(self, folds: List[str]):
@@ -35,3 +38,9 @@ class FoldedTrainer:
 
         with open(os.path.join(out_dir, 'meta.json'), 'w') as meta_file:
             json.dump(meta_info, meta_file, indent=4)
+
+
+class PipelineFoldedTrainer(FoldedTrainer, AbstractStep):
+    def __init__(self, folds: StratificationResult, output_res: AbstractStepResult):
+        FoldedTrainer.__init__(self, folds=folds)
+        AbstractStep.__init__(self, input_results=[folds], output_res=output_res)

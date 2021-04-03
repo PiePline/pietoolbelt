@@ -1,14 +1,17 @@
 import json
 import os
 import unittest
+from abc import ABCMeta, abstractmethod
+from typing import List
 
 import numpy as np
 import shutil
 
-__all__ = ['StratificationTest']
+__all__ = ['StratificationResultTest', 'DatasetStratificationTest', 'TestDatasetStratificationInPipeline']
 
 from pietoolbelt.datasets.common import BasicDataset
-from pietoolbelt.pipeline.stratification import DatasetStratification, StratificationResult
+from pietoolbelt.pipeline.abstract_step import DatasetInPipeline
+from pietoolbelt.pipeline.stratification import DatasetStratification, StratificationResult, PipelineDatasetStratification
 
 
 class _DatasetMock(BasicDataset):
@@ -26,6 +29,10 @@ class _BaseTest(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(_BaseTest.RESULT_DIR):
             shutil.rmtree(_BaseTest.RESULT_DIR, ignore_errors=True)
+
+
+def _calc_label(x):
+    return x // 10
 
 
 class StratificationResultTest(_BaseTest):
@@ -77,36 +84,83 @@ class StratificationResultTest(_BaseTest):
             self.assertEqual(indices.tolist(), loaded_indices.tolist())
 
 
-class StratificationTest(_BaseTest):
+class _BaseStratificationTest(_BaseTest, metaclass=ABCMeta):
+    @abstractmethod
+    def init_stratificator(self):
+        return None
+
     def test_init(self):
         try:
-            DatasetStratification(dataset=_DatasetMock(), calc_target_label=lambda x: x // 10,
-                                  result=StratificationResult(StratificationTest.RESULT_DIR), workers_num=2)
+            self.init_stratificator()
         except TypeError as err:
             self.fail("Can't instantiate DatasetStratification class. Bad arguments")
         except Exception as err:
             self.fail("Can't instantiate DatasetStratification class")
 
-    def test_stratification(self):
+    def _test_stratification(self, stratification):
         def test_indices(path: str, target_num: int):
             self.assertTrue(os.path.exists(path))
             self.assertEqual(target_num, len(np.load(path)))
 
-        stratification = DatasetStratification(dataset=_DatasetMock(), calc_target_label=lambda x: x // 10,
-                                               result=StratificationResult(StratificationTest.RESULT_DIR), workers_num=0)
-
         stratification.run(parts={'a': 0.3, 'b': 0.7})
-        test_indices(os.path.join(StratificationTest.RESULT_DIR, 'a.npy'), target_num=30)
-        test_indices(os.path.join(StratificationTest.RESULT_DIR, 'b.npy'), target_num=70)
+        test_indices(os.path.join(_BaseStratificationTest.RESULT_DIR, 'a.npy'), target_num=30)
+        test_indices(os.path.join(_BaseStratificationTest.RESULT_DIR, 'b.npy'), target_num=70)
 
-        indices_1 = np.load(os.path.join(StratificationTest.RESULT_DIR, 'a.npy'))
-        indices_2 = np.load(os.path.join(StratificationTest.RESULT_DIR, 'b.npy'))
+        indices_1 = np.load(os.path.join(_BaseStratificationTest.RESULT_DIR, 'a.npy'))
+        indices_2 = np.load(os.path.join(_BaseStratificationTest.RESULT_DIR, 'b.npy'))
 
         self.assertTrue(np.isin(indices_1, indices_2).max() == 0)
 
         stratification.run(parts={'a': 0.7, 'b': 0.3})
-        test_indices(os.path.join(StratificationTest.RESULT_DIR, 'a.npy'), target_num=70)
-        test_indices(os.path.join(StratificationTest.RESULT_DIR, 'b.npy'), target_num=30)
+        test_indices(os.path.join(_BaseStratificationTest.RESULT_DIR, 'a.npy'), target_num=70)
+        test_indices(os.path.join(_BaseStratificationTest.RESULT_DIR, 'b.npy'), target_num=30)
 
         with self.assertRaises(RuntimeError):
             stratification.run(parts={'a': 0.6, 'b': 0.7})
+
+    def test_stratification(self):
+        stratification = DatasetStratification(dataset=_DatasetMock(), calc_target_label=lambda x: x // 10,
+                                               result=StratificationResult(_BaseStratificationTest.RESULT_DIR), workers_num=0)
+        self._test_stratification(stratification)
+
+    def test_multiprocess_stratification(self):
+        multiprocess_stratification = DatasetStratification(dataset=_DatasetMock(), calc_target_label=_calc_label,
+                                                            result=StratificationResult(_BaseStratificationTest.RESULT_DIR),
+                                                            workers_num=2)
+        self._test_stratification(multiprocess_stratification)
+
+
+class DatasetStratificationTest(_BaseStratificationTest):
+    def init_stratificator(self):
+        DatasetStratification(dataset=_DatasetMock(), calc_target_label=lambda x: x // 10,
+                              result=StratificationResult(_BaseStratificationTest.RESULT_DIR), workers_num=2)
+
+
+class _DatasetInPipelineMock(DatasetInPipeline):
+    def __init__(self):
+        items = list(range(100))
+        super().__init__(items)
+
+    def get_output_paths(self) -> List[str]:
+        return ['fake_dir']
+
+    def _interpret_item(self, item) -> any:
+        return {'data': item}
+
+
+class TestDatasetStratificationInPipeline(_BaseStratificationTest):
+    def init_stratificator(self):
+        dataset = _DatasetInPipelineMock()
+        result = StratificationResult(TestDatasetStratificationInPipeline.RESULT_DIR)
+        stratification = PipelineDatasetStratification(dataset=dataset, calc_target_label=lambda x: x // 10, result=result,
+                                                       workers_num=0)
+        return stratification
+
+    def test_interface(self):
+        dataset = _DatasetInPipelineMock()
+        result = StratificationResult(TestDatasetStratificationInPipeline.RESULT_DIR)
+        stratification = PipelineDatasetStratification(dataset=dataset, calc_target_label=lambda x: x // 10, result=result,
+                                                       workers_num=0)
+
+        self.assertEqual(stratification.get_input_results(), [dataset])
+        self.assertEqual(stratification.get_output_res(), result)
