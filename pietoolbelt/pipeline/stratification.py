@@ -1,7 +1,7 @@
 import json
 from multiprocessing import Pool
 from random import randint
-from typing import List
+from typing import List, Dict
 
 import numpy as np
 import os
@@ -24,14 +24,18 @@ class StratificationResult(AbstractStepDirResult):
             self._meta = dict()
 
         self._name2file = lambda name: name + '.npy' if len(name) < 4 or name[-4:] != '.npy' else name
+        self._name2path = lambda name: os.path.join(self._path, self._name2file(name))
 
     def add_indices(self, indices: List[np.uint], name: str, dataset: BasicDataset):
-        dataset.set_indices(indices).flush_indices(os.path.join(self._path, self._name2file(name)))
+        dataset.set_indices(indices).flush_indices(self._name2path(name))
 
         self._meta[name] = {'indices_num': len(indices)}
 
         with open(self._meta_file, 'w') as meta_file:
             json.dump(self._meta, meta_file)
+
+    def get_folds(self) -> List[str]:
+        return list(self._meta.keys())
 
     def get_indices(self, name: str) -> List[np.ndarray]:
         file_path = os.path.join(self._path, self._name2file(name))
@@ -108,7 +112,7 @@ class DatasetStratification:
 
     def _flush_indices(self, indices: [], part_indices: [], path: str):
         inner_indices = [part_indices[it] for bin in indices[1].values() for it in bin]
-        self._result.add_indices(inner_indices, path, self._dataset)
+        self._result.add_indices(indices=inner_indices, name=path, dataset=self._dataset)
         return inner_indices
 
     def run(self, parts: {str: float}) -> None:

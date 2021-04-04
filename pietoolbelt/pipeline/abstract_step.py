@@ -25,6 +25,9 @@ class AbstractStepDirResult(AbstractStepResult, metaclass=ABCMeta):
         else:
             os.makedirs(path)
 
+    def get_output_paths(self) -> List[str]:
+        return [self._path]
+
 
 class AbstractStep(metaclass=ABCMeta):
     def __init__(self, output_res: AbstractStepResult, input_results: List[AbstractStepResult] = None):
