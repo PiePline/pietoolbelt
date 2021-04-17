@@ -29,6 +29,17 @@ class AbstractStepDirResult(AbstractStepResult, metaclass=ABCMeta):
         return [self._path]
 
 
+class ResultsContainer(AbstractStepResult):
+    def __init__(self, results: List[AbstractStepResult]):
+        self._results = results
+
+    def get_output_paths(self) -> List[str]:
+        out = []
+        for res in self._results:
+            out.extend(res.get_output_paths())
+        return out
+
+
 class AbstractStep(metaclass=ABCMeta):
     def __init__(self, output_res: AbstractStepResult, input_results: List[AbstractStepResult] = None):
         self._input_results = input_results

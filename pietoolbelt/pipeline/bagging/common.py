@@ -3,121 +3,69 @@ import json
 import os
 from abc import ABCMeta
 from multiprocessing import Pool
-from typing import Dict
+from typing import Dict, Callable, List, Any
 
 import numpy as np
+from piepline.data_producer import BasicDataset, DataProducer
 from tqdm import tqdm
 
+from pietoolbelt.pipeline.abstract_step import AbstractStepDirResult, ResultsContainer
+from pietoolbelt.pipeline.predict.common import AbstractPredictResult
 from pietoolbelt.utils.step_meta import StepMeta
 
 __all__ = ['AbstractBagging']
 
 
-class BaggingResult:
+class BaggingResult(AbstractStepDirResult):
     def __init__(self, path: str):
-        self._path = path
+        super().__init__(path)
 
-    def
+    def set_config(self, config: dict):
+        raise NotImplementedError()
 
 
 class AbstractBagging(metaclass=ABCMeta):
-    def __init__(self, predicts_path: str, main_metric: Dict[str, callable], meta: StepMeta, workers_num: int = 0):
-        self._path = predicts_path
-        self._workers_num = workers_num
+    def __init__(self, predicts_result: List[AbstractPredictResult], calc_error: Callable[[float, float], float],
+                 dataset: BasicDataset, reduce: Callable[[List[float]], float]):
+        self._predicts_results = predicts_result
+        self._dataset = dataset
 
-        self._main_metric = main_metric
-        self._metrics = []
+        self._calc_error = calc_error
+        self._reduce = reduce
 
-    def add_metric(self, metric: callable, name: str) -> 'AbstractBagging':
-        self._metrics.append({'name': name, 'metric': metric})
-        return self
+    def run(self, max_cmb_len: int = None) -> List[AbstractPredictResult]:
+        all_combinations = self._generate_combinations(max_cmb_len)
 
-    def _load_predicts(self) -> list or tuple:
-        with open(os.path.join(self._path, 'meta.json'), 'r') as meta_file:
-            predicts_config = json.load(meta_file)
+        best_cmb, best_err = None, None
+        for cmb in all_combinations:
+            cur_err = self._calc_err_by_cmb(cmb)
+            if best_err is None or cur_err < best_err:
+                best_cmb, best_err = cmb, cur_err
+        return best_cmb
 
-        all_predicts = []
-        headers = None
-        for model in predicts_config:
-            cur_fold_dir = model['path']
+    def _calc_err_by_cmb(self, combination: List[AbstractPredictResult]) -> float:
+        errors = []
 
-            with open(os.path.join(self._path, cur_fold_dir, self._predicts_names), 'r') as pred_file:
-                predicts = np.loadtxt(pred_file, delimiter=',', dtype=str)
-                if self._with_headers:
-                    if headers is None:
-                        headers = [str(p) for p in predicts[0]]
-                    predicts = predicts[1:].astype(np.float32)
-                else:
-                    predicts = predicts.astype(np.float32)
-            with open(os.path.join(self._path, cur_fold_dir, self._targets_names), 'r') as ref_file:
-                targets = np.loadtxt(ref_file, delimiter=',', dtype=str)
-                targets = (targets[1:] if self._with_headers else targets).astype(np.float32)
+        dp = DataProducer(self._dataset, batch_size=1, num_workers=0).global_shuffle(False). \
+            pass_indices(need_pass=True).get_loader()
 
-            all_predicts.append({'predicts': predicts, 'targets': targets,
-                                 'model': [{'path': model['path'], 'model': model['model'], 'fold': model['fold']}]})
+        for dat in dp:
+            predict = self._calc_predict(dat['data_idx'], combination)
+            err = self._calc_error(predict, dat['target'])
+            errors.append(err)
 
-        if self._with_headers:
-            return all_predicts, headers
-        else:
-            return all_predicts
+        return np.mean(errors)
 
-    def run(self, output_path: str):
-        if self._with_headers:
-            all_predicts, headers = self._load_predicts()
-        else:
-            all_predicts = self._load_predicts()
+    def _calc_predict(self, index: str, results: List[AbstractPredictResult]) -> Any:
+        return self._reduce([res.get_predict(index) for res in results])
 
-        all_predicts_origin = [{'predicts': p['predicts'].copy(), 'targets': p['targets'].copy(), 'model': p['model']}
-                               for p in all_predicts]
-
-        all_combinations = []
-        indices = list(range(len(all_predicts)))
-        for cmb_len in tqdm(range(2, min(7, len(all_predicts)))):
-            for cmb in itertools.combinations(indices, cmb_len):
-                all_combinations.append(np.array(list(cmb), dtype=np.uint8))
-
-        combinations_data = [[[all_predicts[i] for i in indices], indices, self._main_metric['metric']] for indices in
-                             all_combinations]
-        del all_combinations
-
-        with Pool(self._workers_num) as pool:
-            metrics = list(tqdm(pool.imap(AbstractBagging._merge_predicts_by_indices, combinations_data), total=len(combinations_data)))
-
-        best_metric = metrics[0]['metric']
-        best_predict = AbstractBagging._merge_predicts(combinations_data[0][0])
-        for idx, m in enumerate(metrics[1:]):
-            if m['metric'] < best_metric:
-                best_metric = m['metric']
-                best_predict = AbstractBagging._merge_predicts([all_predicts_origin[i] for i in m['indices']])
-
-        for pred in tqdm(all_predicts_origin):
-            cur_metric = AbstractBagging._calc_metric_by_predict(pred, self._main_metric['metric'])
-            if cur_metric < best_metric:
-                best_metric = cur_metric
-                best_predict = pred
-
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
-
-        with open(os.path.join(output_path, 'metrics.json'), 'w') as metrics_out:
-            json.dump({m['name']: AbstractBagging._calc_metric_by_predict(best_predict, m['metric']) for m in self._metrics},
-                      metrics_out, indent=4)
-
-        with open(os.path.join(output_path, 'meta.json'), 'w') as meta_out:
-            json.dump(best_predict['model'], meta_out, indent=4)
-
-        with open(os.path.join(output_path, self._predicts_names), 'w') as pred_out, \
-                open(os.path.join(output_path, self._targets_names), 'w') as ref_out:
-
-            if self._with_headers:
-                pred_out.write(','.join(headers) + '\n')
-                ref_out.write(','.join(headers) + '\n')
-
-            for pred, ref in zip(best_predict['predicts'], best_predict['targets']):
-                pred_out.write(','.join([str(v) for v in pred]) + '\n')
-                ref_out.write(','.join([str(v) for v in ref]) + '\n')
-
-        return best_predict
+    def _generate_combinations(self, max_cmb_len: int = None) -> List[List[AbstractPredictResult]]:
+        result = []
+        max_cmb_len = len(self._predicts_results) if max_cmb_len is None else max_cmb_len
+        for cmb_len in range(1, max_cmb_len):
+            for cmb in itertools.combinations(self._predicts_results, cmb_len):
+                result.append(list(cmb))
+        return result
 
     @staticmethod
     def _merge_predicts(predicts: []) -> dict:
