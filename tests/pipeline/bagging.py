@@ -23,7 +23,7 @@ class _DatasetMock(BasicDataset):
         super().__init__(items)
 
     def _interpret_item(self, item) -> any:
-        return {'target': self._items[item]}
+        return {'target': item}
 
 
 class TestBasicBagging(unittest.TestCase):
@@ -58,9 +58,21 @@ class TestBasicBagging(unittest.TestCase):
         shutil.rmtree(TestBasicBagging.RES_DIR, ignore_errors=True)
 
         bagging = BasicBagging(
-            predicts_result={'r1': _PredictResultMock({'0': 1, '1': 2}), 'r2': _PredictResultMock({'0': 2, '1': 0})},
+            predicts_result={'r1': _PredictResultMock({'0': 1, '1': 2}), 'r2': _PredictResultMock({'0': 2, '1': 0}),
+                             'r3': _PredictResultMock({'0': 2, '1': 0})},
             calc_error=lambda x, y: x - y, dataset=_DatasetMock([1, 0]), reduce=np.mean,
             result=BaggingResult(path=TestBasicBagging.RES_DIR))
 
         res = bagging.run()
         self.assertEqual(list(res.keys()), ['r2'])
+
+        shutil.rmtree(TestBasicBagging.RES_DIR, ignore_errors=True)
+
+        bagging = BasicBagging(
+            predicts_result={'r1': _PredictResultMock({'0': 1, '1': 2}), 'r2': _PredictResultMock({'0': 2, '1': 0}),
+                             'r3': _PredictResultMock({'0': 0, '1': 0})},
+            calc_error=lambda x, y: abs(x - y), dataset=_DatasetMock([1, 0]), reduce=np.mean,
+            result=BaggingResult(path=TestBasicBagging.RES_DIR))
+
+        res = bagging.run()
+        self.assertEqual(list(res.keys()), ['r2', 'r3'])
