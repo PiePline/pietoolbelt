@@ -1,7 +1,7 @@
 import json
 from multiprocessing import Pool
 from random import randint
-from typing import List, Dict
+from typing import List, Dict, Callable, Any
 
 import numpy as np
 import os
@@ -49,7 +49,7 @@ class StratificationResult(AbstractStepDirResult):
 
 
 class DatasetStratification:
-    def __init__(self, dataset: BasicDataset, calc_target_label: callable, result: StratificationResult, workers_num: int = 0):
+    def __init__(self, dataset: BasicDataset, calc_target_label: Callable[[Any], int], result: StratificationResult, workers_num: int = 0):
         self._dataset = dataset
         self._calc_label = calc_target_label
         self._progress_clbk = None
