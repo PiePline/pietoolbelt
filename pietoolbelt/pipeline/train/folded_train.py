@@ -14,19 +14,25 @@ __all__ = ['FoldedTrainResult', 'FoldedTrainer', 'PipelineFoldedTrainer']
 class FoldedTrainResult(AbstractStepDirResult):
     def __init__(self, path: str):
         super().__init__(path)
-        self._folds = {}
+        self._folds = dict()
         self._meta_file_path = os.path.join(self._path, 'meta.json')
+
+        if os.path.exists(self._meta_file_path):
+            with open(self._meta_file_path, 'r') as meta_file:
+                self._folds = json.load(meta_file)
 
     def add_fold(self, name: str, status: str) -> str:
         path = os.path.join(self._path, name)
         self._folds[name] = {'path': path, 'status': status}
         with open(self._meta_file_path, 'w') as meta_file:
             json.dump(self._folds, meta_file)
-
         return path
 
     def get_output_paths(self) -> List[str]:
-        return [self._path]
+        return [f['path'] for f in self._folds.values()]
+
+    def get_root_dir(self) -> str:
+        return self._path
 
 
 class FoldedTrainer:
