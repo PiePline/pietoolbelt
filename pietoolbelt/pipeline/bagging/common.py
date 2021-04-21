@@ -4,7 +4,7 @@ import os
 from typing import Callable, List, Any, Dict
 
 import numpy as np
-from piepline.data_producer import BasicDataset, DataProducer
+from piepline.data_producer import DataProducer, AbstractDataset
 
 from pietoolbelt.pipeline.abstract_step import AbstractStepDirResult
 from pietoolbelt.pipeline.predict.common import AbstractPredictResult
@@ -54,8 +54,8 @@ class BaggingResult(AbstractStepDirResult):
 
 
 class BasicBagging:
-    def __init__(self, predicts_result: Dict[str, AbstractPredictResult], calc_error: Callable[[float, float], float],
-                 dataset: BasicDataset, reduce: Callable[[List[float]], float], result: BaggingResult):
+    def __init__(self, predicts_result: Dict[str, AbstractPredictResult], calc_error: Callable[[Any, Any], float],
+                 dataset: AbstractDataset, reduce: Callable[[List[float]], float], result: BaggingResult):
         if len(predicts_result) < 2:
             raise Exception("Predicts results number must be >= 1")
 

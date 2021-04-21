@@ -31,6 +31,9 @@ class FoldedTrainResult(AbstractStepDirResult):
     def get_output_paths(self) -> List[str]:
         return [f['path'] for f in self._folds.values()]
 
+    def get_folds_meta(self) -> Dict[str, Dict[str, str]]:
+        return self._folds
+
     def get_root_dir(self) -> str:
         return self._path
 

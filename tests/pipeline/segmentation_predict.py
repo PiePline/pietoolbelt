@@ -27,8 +27,8 @@ class _ModelMock(torch.nn.Module):
         self.predicts = []
 
     def forward(self, data):
-        res = np.random.randn(1, 24, 24).astype(np.float32)
-        self.predicts.append(res)
+        res = np.random.randn(data.shape[0], 1, 24, 24).astype(np.float32)
+        self.predicts.extend([np.squeeze(r) for r in res])
         return torch.from_numpy(res)
 
 
@@ -68,7 +68,7 @@ class SegmentationPredictTest(unittest.TestCase):
     def test_init(self):
         self.init_predictor()
 
-    def test_predict(self):
+    def test_predict_batch_size1(self):
         predict = self.init_predictor()
 
         elements_num = 10
@@ -86,3 +86,23 @@ class SegmentationPredictTest(unittest.TestCase):
             saved_predict = np.load(cur_file)
 
             self.assertTrue(np.array_equal(saved_predict, real_predicts[i]))
+
+    def test_predict_batch_size3(self):
+        predict = self.init_predictor()
+
+        elements_num = 10
+        dataset = _DatasetMock(elements_num)
+        predict.run(dataset=dataset, batch_size=3, workers_num=0)
+
+        model = predict.predictor().data_processor().model()
+
+        dp = DataProducer(dataset, batch_size=1, num_workers=0).global_shuffle(False).pass_indices(need_pass=True).get_loader()
+        real_predicts = model.predicts
+        for i, data in enumerate(dp):
+            cur_file = os.path.join(SegmentationPredictTest.RESULT_DIR, 'predicts', data['data_idx'][0] + '.npy')
+            self.assertTrue(os.path.exists(cur_file), msg="[{}] file doesn't exists".format(cur_file))
+
+            saved_predict = np.load(cur_file)
+
+            self.assertTrue(np.array_equal(saved_predict, real_predicts[i]),
+                            msg='saved shape: {}; real shape: {}'.format(saved_predict.shape, real_predicts[i].shape))

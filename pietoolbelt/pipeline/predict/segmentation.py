@@ -45,7 +45,7 @@ class SegmentationPredict(AbstractPredict):
             predict = predict.detach().cpu().numpy()
 
             for cur_predict, index in zip(predict, dat['data_idx']):
-                self._result.add_predict(index=index, predict=predict)
+                self._result.add_predict(index=index, predict=np.squeeze(cur_predict))
 
 
 class PipelineSegmentationPredict(SegmentationPredict, AbstractStep):
