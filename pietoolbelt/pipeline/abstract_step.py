@@ -16,13 +16,10 @@ class AbstractStepResult(metaclass=ABCMeta):
 
 
 class AbstractStepDirResult(AbstractStepResult, metaclass=ABCMeta):
-    def __init__(self, path: str, allow_exist=False):
+    def __init__(self, path: str):
         self._path = path
 
-        if os.path.exists(path):
-            if not allow_exist:
-                raise Exception("Directory {} exists".format(path))
-        else:
+        if not os.path.exists(path):
             os.makedirs(path)
 
     def get_output_paths(self) -> List[str]:
