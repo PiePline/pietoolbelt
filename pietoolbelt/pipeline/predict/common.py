@@ -48,7 +48,7 @@ class FoldedPredict:
 
     def run(self, dataset: AbstractDataset, batch_size: int = 1, workers_num: int = 0):
         for fold_path in self._train_result.get_output_paths():
-            result_path = os.path.relpath(self._train_result.get_root_dir(), fold_path)
+            result_path = os.path.relpath(fold_path, self._train_result.get_root_dir())
 
             fsm = FileStructManager(base_dir=fold_path, is_continue=True)
 
