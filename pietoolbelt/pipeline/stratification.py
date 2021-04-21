@@ -13,8 +13,8 @@ from pietoolbelt.pipeline.abstract_step import AbstractStep, DatasetInPipeline, 
 
 
 class StratificationResult(AbstractStepDirResult):
-    def __init__(self, path: str, allow_exist=False):
-        super().__init__(path, allow_exist=allow_exist)
+    def __init__(self, path: str):
+        super().__init__(path)
         self._meta_file = os.path.join(path, 'meta.json')
 
         if os.path.exists(self._meta_file):
