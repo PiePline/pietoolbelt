@@ -14,6 +14,8 @@ from mlflow.utils import mlflow_tags
 from piepline.train_config.metrics import MetricsGroup, AbstractMetric
 from piepline.monitoring.monitors import AbstractMetricsMonitor, AbstractLossMonitor
 
+__all__ = ['MLFlowMonitor']
+
 
 def _already_ran(git_commit, client, experiment_id=None):
     """
@@ -36,6 +38,8 @@ class MLFlowMonitor(AbstractMetricsMonitor, AbstractLossMonitor):
     def __init__(self, server_url: str, project_name: str, run_name: str = None):
         AbstractMetricsMonitor.__init__(self)
         AbstractLossMonitor.__init__(self)
+
+        self._prefix = ''
 
         with mlflow.start_run() as active_run:
             git_commit = active_run.data.tags.get(mlflow_tags.MLFLOW_GIT_COMMIT)
@@ -69,8 +73,12 @@ class MLFlowMonitor(AbstractMetricsMonitor, AbstractLossMonitor):
                 self._client.set_tag(self._run.info.run_id, mlflow_tags.MLFLOW_RUN_NAME, branch)
 
     def _log_metric(self, name: str, value: float, epoch_idx: int = None):
-        self._client.log_metric(self._run.info.run_id, key=name, value=value, timestamp=int(time() * 1000),
+        self._client.log_metric(self._run.info.run_id, key=self._prefix + name, value=value, timestamp=int(time() * 1000),
                                 step=self._epoch_num if epoch_idx is None else epoch_idx)
+
+    def set_prefix(self, prefix: str) -> 'MLFlowMonitor':
+        self._prefix = prefix + '/'
+        return self
 
     def update_losses(self, losses: {}) -> None:
         """
@@ -82,9 +90,9 @@ class MLFlowMonitor(AbstractMetricsMonitor, AbstractLossMonitor):
         def on_loss(name: str, values: np.ndarray or dict) -> None:
             if isinstance(values, dict):
                 for k, v in values.items():
-                    self._log_metric('loss_{}/k'.format(name, k), value=np.mean(v))
+                    self._log_metric(self._prefix + 'loss_{}/k'.format(name, k), value=np.mean(v))
             else:
-                self._log_metric('loss/{}'.format(name), np.mean(values))
+                self._log_metric(self._prefix + 'loss/{}'.format(name), np.mean(values))
 
         self._iterate_by_losses(losses, on_loss)
 
@@ -113,16 +121,6 @@ class MLFlowMonitor(AbstractMetricsMonitor, AbstractLossMonitor):
 
     def close(self):
         self._client.set_terminated(self._run.info.run_id, status='FINISHED', end_time=int(time() * 1000))
-        pass
-        # mlflow.end_run()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-
-
-if __name__ == '__main__':
-    for j in range(3):
-        with MLFlowMonitor(server_url='http://188.243.59.185:5000', project_name='test') as mon:
-            # mlflow.log_param('run_id', j)
-            for i in range(10):
-                mon.update_scalar('met/{}'.format(j), float(i) * random(), epoch_idx=i)
