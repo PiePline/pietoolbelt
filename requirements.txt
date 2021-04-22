@@ -1,4 +1,4 @@
-piepline==0.2.6
+piepline==0.2.7
 opencv-python
 scikit-learn
 numpy
@@ -7,3 +7,4 @@ torch>=0.4.1
 torchvision
 sklearn
 albumentations
+mlflow==1.15.0
