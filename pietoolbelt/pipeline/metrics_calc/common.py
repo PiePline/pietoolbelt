@@ -17,6 +17,7 @@ class MetricsCalcResult(AbstractStepDirResult):
         super().__init__(path)
         self._metrics_file = os.path.join(self._path, 'metrics.json')
 
+        self._metrics = dict()
         if os.path.exists(self._metrics_file):
             with open(self._metrics_file, 'r') as metrics_file:
                 self._metrics = json.load(metrics_file)

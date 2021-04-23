@@ -8,3 +8,4 @@ torchvision
 sklearn
 albumentations
 mlflow==1.15.0
+boto3
