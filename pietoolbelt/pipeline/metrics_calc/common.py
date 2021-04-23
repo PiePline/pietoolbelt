@@ -9,15 +9,28 @@ from pietoolbelt.pipeline.predict.common import AbstractPredictResult
 import numpy as np
 import os
 
+__all__ = ['MetricsCalcResult', 'MetricsCalculation']
+
 
 class MetricsCalcResult(AbstractStepDirResult):
     def __init__(self, path: str):
         super().__init__(path)
         self._metrics_file = os.path.join(self._path, 'metrics.json')
 
-    def set_metrics(self, metrics: Dict[str, float]):
+        if os.path.exists(self._metrics_file):
+            with open(self._metrics_file, 'r') as metrics_file:
+                self._metrics = json.load(metrics_file)
+
+    def set_metric(self, name: str, value: float):
+        if name in self._metrics:
+            raise IndexError("Metric '{}' also registered".format(name))
+        self._metrics[name] = value
+
         with open(self._metrics_file, 'w') as out:
-            json.dump(metrics, out)
+            json.dump(self._metrics, out)
+
+    def get_metrics(self) -> Dict[str, float]:
+        return self._metrics
 
     def get_output_paths(self) -> List[str]:
         return [self._metrics_file]
@@ -53,9 +66,8 @@ class MetricsCalculation:
                 result[metric_name].append(params['calc'](predict, target))
 
         for metric_name, values in result.items():
-            result[metric_name] = self._metrics[metric_name]['reduce'](values)
-
-        self._result.set_metrics(result)
+            value = self._metrics[metric_name]['reduce'](values)
+            self._result.set_metric(name=metric_name, value=value)
 
     def set_pick_target(self, pick: Callable[[Any], Any]) -> 'MetricsCalculation':
         self._pick_target = pick
