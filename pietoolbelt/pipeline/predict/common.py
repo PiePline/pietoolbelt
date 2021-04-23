@@ -3,17 +3,27 @@ import os
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, List, Dict
 
-from piepline.data_producer import AbstractDataset
+from piepline.data_producer import AbstractDataset, DataProducer
 from piepline.predict import Predictor
 from piepline.utils.fsm import FileStructManager
 
-from pietoolbelt.pipeline.abstract_step import AbstractStepDirResult, AbstractStepResult
+from pietoolbelt.pipeline.abstract_step import AbstractStepDirResult
 from pietoolbelt.pipeline.train.folded_train import FoldedTrainResult
 
 __all__ = ['AbstractPredictResult', 'AbstractPredict', 'FoldedPredict']
 
 
 class AbstractPredictResult(AbstractStepDirResult):
+    @abstractmethod
+    def add_predict(self, index: str, predict: Any):
+        """
+        Add one predict to the result
+
+        Args:
+            index (str): index of the predict
+            predict (Any): predict data
+        """
+
     @abstractmethod
     def get_predict(self, index: str) -> Any:
         """
@@ -32,14 +42,35 @@ class AbstractPredict(metaclass=ABCMeta):
         self._predictor = predictor
         self._result = result
 
+    @abstractmethod
+    def _predict_to_list(self, predict: Any) -> List[Any]:
+        """
+        Convert batched predict to list of predicts
+
+        Args:
+            predict (Any): batch of predicts
+
+        Returns:
+             list of predicts
+        """
+
     def predictor(self) -> Predictor:
         return self._predictor
 
-    @abstractmethod
     def run(self, dataset: AbstractDataset, batch_size: int = 1, workers_num: int = 0) -> None:
         """
         Run prediction operation
         """
+
+        dp = DataProducer(dataset, batch_size=batch_size, num_workers=workers_num).global_shuffle(False). \
+            pass_indices(need_pass=True).get_loader()
+
+        for dat in dp:
+            predict = self._predictor.predict(dat)
+            predict = self._predict_to_list(predict)
+
+            for cur_predict, index in zip(predict, dat['data_idx']):
+                self._result.add_predict(index=index, predict=cur_predict)
 
 
 class FoldedPredictResult(AbstractStepDirResult):

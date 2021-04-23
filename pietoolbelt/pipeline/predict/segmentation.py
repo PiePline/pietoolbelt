@@ -1,15 +1,14 @@
 import os
-from typing import Any
+from typing import Any, List
 
 import numpy as np
-from piepline.data_producer import DataProducer, AbstractDataset
 from piepline.predict import Predictor
-
-__all__ = ['SegmentationPredict', 'SegmentationPredictResult']
 
 from pietoolbelt.pipeline.abstract_step import AbstractStep
 from pietoolbelt.pipeline.predict.common import AbstractPredict, AbstractPredictResult
 from pietoolbelt.pipeline.train.common import TrainResult
+
+__all__ = ['SegmentationPredict', 'SegmentationPredictResult', 'PipelineSegmentationPredict']
 
 
 class SegmentationPredictResult(AbstractPredictResult):
@@ -36,16 +35,9 @@ class SegmentationPredict(AbstractPredict):
     def __init__(self, predictor: Predictor, result: SegmentationPredictResult):
         super().__init__(predictor, result=result)
 
-    def run(self, dataset: AbstractDataset, batch_size: int = 1, workers_num: int = 0):
-        dp = DataProducer(dataset, batch_size=batch_size, num_workers=workers_num).global_shuffle(False). \
-            pass_indices(need_pass=True).get_loader()
-
-        for dat in dp:
-            predict = self._predictor.predict(dat)
-            predict = predict.detach().cpu().numpy()
-
-            for cur_predict, index in zip(predict, dat['data_idx']):
-                self._result.add_predict(index=index, predict=np.squeeze(cur_predict))
+    def _predict_to_list(self, predict: Any) -> List[Any]:
+        predict = predict.detach().cpu().numpy()
+        return [np.squeeze(p) for p in predict]
 
 
 class PipelineSegmentationPredict(SegmentationPredict, AbstractStep):
