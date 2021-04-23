@@ -107,8 +107,6 @@ class FoldedPredict:
 
     def run(self, dataset: AbstractDataset, batch_size: int = 1, workers_num: int = 0):
         for fold_name, fold_data in self._train_result.get_folds_meta().items():
-            result_path = os.path.relpath(fold_data['path'], self._train_result.get_root_dir())
-
             fsm = FileStructManager(base_dir=fold_data['path'], is_continue=True)
             result = self._result.add_fold(fold_name)
             predictor = self._init_predictor(fsm, result)
