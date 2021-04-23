@@ -90,9 +90,9 @@ class MLFlowMonitor(AbstractMetricsMonitor, AbstractLossMonitor):
         def on_loss(name: str, values: np.ndarray or dict) -> None:
             if isinstance(values, dict):
                 for k, v in values.items():
-                    self._log_metric(self._prefix + 'loss_{}/k'.format(name, k), value=np.mean(v))
+                    self._log_metric('loss_{}/{}'.format(name, k), value=np.mean(v))
             else:
-                self._log_metric(self._prefix + 'loss/{}'.format(name), np.mean(values))
+                self._log_metric('loss/{}'.format(name), np.mean(values))
 
         self._iterate_by_losses(losses, on_loss)
 
