@@ -1,3 +1,4 @@
+import itertools
 import os
 import shutil
 import unittest
@@ -13,6 +14,9 @@ from pietoolbelt.pipeline.predict.common import AbstractPredictResult
 class _PredictResultMock(AbstractPredictResult):
     def __init__(self, predicts: Dict[str, float]):
         self._predicts = predicts
+
+    def add_predict(self, index: str, predict: Any):
+        pass
 
     def get_predict(self, index: str) -> Any:
         return self._predicts[index]
@@ -66,13 +70,69 @@ class TestBasicBagging(unittest.TestCase):
         res = bagging.run()
         self.assertEqual(list(res.keys()), ['r2'])
 
-        shutil.rmtree(TestBasicBagging.RES_DIR, ignore_errors=True)
-
+    def test_predict_correctness(self):
+        result = BaggingResult(path=TestBasicBagging.RES_DIR)
         bagging = BasicBagging(
             predicts_result={'r1': _PredictResultMock({'0': 1, '1': 2}), 'r2': _PredictResultMock({'0': 2, '1': 0}),
                              'r3': _PredictResultMock({'0': 0, '1': 0})},
             calc_error=lambda x, y: abs(x - y), dataset=_DatasetMock([1, 0]), reduce=np.mean,
-            result=BaggingResult(path=TestBasicBagging.RES_DIR))
+            result=result)
 
         res = bagging.run()
         self.assertEqual(list(res.keys()), ['r2', 'r3'])
+        self.assertEqual(result.get_result()['cmb'], ['r2', 'r3'])
+
+    def test_combinations(self):
+        result = BaggingResult(path=TestBasicBagging.RES_DIR)
+        bagging = BasicBagging(
+            predicts_result={'r1': _PredictResultMock({'0': 1, '1': 2}), 'r2': _PredictResultMock({'0': 2, '1': 0}),
+                             'r3': _PredictResultMock({'0': 0, '1': 0})},
+            calc_error=lambda x, y: abs(x - y), dataset=_DatasetMock([1, 0]), reduce=np.mean,
+            result=result)
+
+        res = bagging.run()
+        self.assertEqual(list(res.keys()), ['r2', 'r3'])
+        self.assertEqual(result.get_result()['cmb'], ['r2', 'r3'])
+
+        all_items = ['r1', 'r2', 'r3']
+        all_combinations = []
+        for cmb_len in range(1, len(all_items) + 1):
+            for cmb in itertools.combinations(all_items, cmb_len):
+                all_combinations.append(list(cmb))
+
+        for cmb1 in all_combinations:
+            was_found = False
+            for cmb2 in result.get_combinations():
+                if cmb1 == cmb2['cmb']:
+                    was_found = True
+
+            if not was_found:
+                self.fail("Combination {} doesn't exists".format(cmb1))
+
+        shutil.rmtree(TestBasicBagging.RES_DIR, ignore_errors=True)
+
+        result = BaggingResult(path=TestBasicBagging.RES_DIR)
+        bagging = BasicBagging(
+            predicts_result={'r1': _PredictResultMock({'0': 1, '1': 2}), 'r2': _PredictResultMock({'0': 2, '1': 0}),
+                             'r3': _PredictResultMock({'0': 0, '1': 0})},
+            calc_error=lambda x, y: abs(x - y), dataset=_DatasetMock([1, 0]), reduce=np.mean,
+            result=result)
+
+        res = bagging.run(max_cmb_len=2)
+        self.assertEqual(list(res.keys()), ['r2', 'r3'])
+        self.assertEqual(result.get_result()['cmb'], ['r2', 'r3'])
+
+        all_items = ['r1', 'r2', 'r3']
+        all_combinations = []
+        for cmb_len in range(1, 3):
+            for cmb in itertools.combinations(all_items, cmb_len):
+                all_combinations.append(list(cmb))
+
+        for cmb1 in all_combinations:
+            was_found = False
+            for cmb2 in result.get_combinations():
+                if cmb1 == cmb2['cmb']:
+                    was_found = True
+
+            if not was_found:
+                self.fail("Combination {} doesn't exists".format(cmb1))

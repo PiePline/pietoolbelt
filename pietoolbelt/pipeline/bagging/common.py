@@ -17,40 +17,46 @@ class BaggingResult(AbstractStepDirResult):
         super().__init__(path)
         self._res_file = os.path.join(path, 'meta.json')
 
-    def add_cmb(self, combination: List[str], err: float):
-        prev_data = self._load_prev_data()
+        self._combinations = self._load_prev_data()
 
-        if 'all_cmb' in prev_data:
-            for res in prev_data['all_cmb']:
+    def add_cmb(self, combination: List[str], err: float):
+        if 'all_cmb' in self._combinations:
+            for res in self._combinations['all_cmb']:
                 if combination == res['cmb']:
                     raise IndexError("Combination already in result file. Combination: {}".format(combination))
 
-        prev_data['all_cmb'].append({'cmb': combination, 'err': err})
+        self._combinations['all_cmb'].append({'cmb': combination, 'err': err})
         with open(self._res_file, 'w') as res_file:
-            json.dump(prev_data, res_file)
+            json.dump(self._combinations, res_file, indent=4)
 
     def set_result(self, combination: List[str], err: float):
-        prev_data = self._load_prev_data()
-
-        if 'res' in prev_data:
+        if 'res' in self._combinations and self._combinations['res'] is not None:
             raise Exception("Result already specified")
 
-        prev_data['res'] = {'cmb': combination, 'err': err}
+        self._combinations['res'] = {'cmb': combination, 'err': err}
 
         with open(self._res_file, 'w') as res_file:
-            json.dump(prev_data, res_file)
+            json.dump(self._combinations, res_file, indent=4)
+
+    def get_combinations(self) -> Dict[str, List[Dict[str, List[str] or float]]]:
+        return self._combinations['all_cmb']
+
+    def get_result(self) -> Dict[str, List[str] or float] or None:
+        return self._combinations['res']
 
     def _load_prev_data(self) -> dict:
         if os.path.exists(self._res_file):
             with open(self._res_file, 'r+') as res_file:
-                prev_data = json.load(res_file)
+                data = json.load(res_file)
         else:
-            prev_data = dict()
+            data = dict()
 
-        if 'all_cmb' not in prev_data:
-            prev_data['all_cmb'] = []
+        if 'all_cmb' not in data:
+            data['all_cmb'] = []
+        if 'res' not in data:
+            data['res'] = None
 
-        return prev_data
+        return data
 
 
 class BasicBagging:
@@ -107,7 +113,7 @@ class BasicBagging:
     def _generate_combinations(self, max_cmb_len: int = None) -> List[List[str]]:
         result = []
         max_cmb_len = len(self._predicts_results) if max_cmb_len is None else max_cmb_len
-        for cmb_len in range(1, max_cmb_len):
+        for cmb_len in range(1, max_cmb_len + 1):
             for cmb in itertools.combinations(self._predicts_results.keys(), cmb_len):
                 result.append(list(cmb))
         return result
