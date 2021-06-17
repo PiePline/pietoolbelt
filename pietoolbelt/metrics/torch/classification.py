@@ -1,7 +1,8 @@
 from abc import abstractmethod, ABCMeta
 
 import numpy as np
-from piepline import MetricsProcessor, MetricsGroup, AbstractMetric
+from piepline.train_config.metrics import MetricsGroup, AbstractMetric
+from piepline.train_config.metrics_processor import MetricsProcessor
 from torch import Tensor
 from sklearn.metrics import roc_auc_score, confusion_matrix
 
