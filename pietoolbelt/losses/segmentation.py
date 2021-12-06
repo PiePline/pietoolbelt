@@ -52,7 +52,7 @@ class BCEDiceLoss(ComposedLoss):
 
 class MulticlassSegmentationLoss(Module):
     """
-    Wrapper loss function to work with multiclass segmentation.
+    Wrapper loss function to work with multiclass inference.
     This just split masks by classes and calculate :arg:`base_loss` for every class. After that all loss values summarized
 
     Args:
