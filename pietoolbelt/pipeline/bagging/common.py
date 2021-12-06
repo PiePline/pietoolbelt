@@ -5,9 +5,12 @@ from typing import Callable, List, Any, Dict
 
 import numpy as np
 from piepline.data_producer import DataProducer, AbstractDataset
+from piepline.predict import Predictor
+from piepline.utils.fsm import FileStructManager
 
 from pietoolbelt.pipeline.abstract_step import AbstractStepDirResult
-from pietoolbelt.pipeline.predict.common import AbstractPredictResult
+from pietoolbelt.pipeline.model_registry import ModelRegistry
+from pietoolbelt.pipeline.predict.common import AbstractPredictResult, AbstractPredict
 
 __all__ = ['BasicBagging', 'BaggingResult']
 
@@ -117,3 +120,13 @@ class BasicBagging:
             for cmb in itertools.combinations(self._predicts_results.keys(), cmb_len):
                 result.append(list(cmb))
         return result
+
+
+class BaggingResultModelsLoader:
+    def __init__(self, bagging_result: BaggingResult, model_registry: ModelRegistry):
+        self._result = bagging_result
+        self._model_registry = model_registry
+
+    def run(self, init_predictor: Callable[[str], Predictor]):
+        for fold_name in self._result.get_result()['cmb']:
+            fsm = FileStructManager(base_dir=fold_data['path'], is_continue=True)

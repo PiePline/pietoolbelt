@@ -12,9 +12,10 @@ __all__ = ['FoldedTrainResult', 'FoldedTrainer', 'PipelineFoldedTrainer']
 
 
 class FoldedTrainResult(AbstractStepDirResult):
-    def __init__(self, path: str):
+    def __init__(self, path: str, models: List[str] = None):
         super().__init__(path)
         self._folds = dict()
+        self._models = models
         self._meta_file_path = os.path.join(self._path, 'meta.json')
 
         if os.path.exists(self._meta_file_path):
@@ -53,9 +54,14 @@ class FoldedTrainer:
         folds = {'train': cur_folds, 'val': val_fold}
 
         fold_path = self._result.add_fold(name=val_fold, status='pending')
-        fsm = FileStructManager(base_dir=fold_path, is_continue=False)
+        if val_fold in self._result.get_folds_meta() and self._result.get_folds_meta()['status'] == 'pending':
+            fsm = FileStructManager(base_dir=fold_path, is_continue=True)
+        else:
+            fsm = FileStructManager(base_dir=fold_path, is_continue=False)
+
         trainer = init_trainer(fsm, folds)
         trainer.train()
+
         self._result.add_fold(name=val_fold, status='completed')
 
 
