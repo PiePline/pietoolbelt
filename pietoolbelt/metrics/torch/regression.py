@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from piepline import AbstractMetric
+from piepline.train_config.metrics import AbstractMetric
 from sklearn.preprocessing import MinMaxScaler
 from torch import Tensor
 
