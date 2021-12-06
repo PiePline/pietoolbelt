@@ -1,5 +1,5 @@
 import torch
-from piepline import AbstractMetric
+from piepline.train_config.metrics import AbstractMetric
 from torch import Tensor
 
 __all__ = ['calc_tp_fp_fn', 'f_beta_score']

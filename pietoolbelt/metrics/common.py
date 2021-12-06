@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from piepline import AbstractMetric
+from piepline.train_config.metrics import AbstractMetric
 
 
 def dice2jaccard(dice_val):

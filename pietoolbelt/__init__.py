@@ -1,4 +1,4 @@
-__version__ = '0.3.10'
+__version__ = '0.3.21'
 
 from . import datasets
 from . import losses
@@ -8,4 +8,4 @@ from . import img_matcher
 from . import viz
 from . import mask_composer
 from . import utils
-from . import steps
+from . import pipeline
