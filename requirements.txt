@@ -1,4 +1,4 @@
-piepline==0.2.7
+piepline~=0.3.0
 opencv-python
 scikit-learn
 numpy
