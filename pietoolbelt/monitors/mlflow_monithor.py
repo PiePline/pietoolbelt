@@ -75,11 +75,14 @@ class MLFlowMonitor(AbstractMetricsMonitor, AbstractLossMonitor):
         else:
             if run_name is not None:
                 self._client.set_tag(self._run.info.run_id, mlflow_tags.MLFLOW_RUN_NAME, branch)
-        self._client.set_tag(self._run.info.run_id, mlflow_tags.MLFLOW_USER, os.getlogin())
 
     def _log_metric(self, name: str, value: float, epoch_idx: int = None):
         self._client.log_metric(self._run.info.run_id, key=self._prefix + name, value=value, timestamp=int(time() * 1000),
                                 step=self._epoch_num if epoch_idx is None else epoch_idx)
+
+    def log_params(self, params: dict):
+        for k, v in params.items():
+            self._client.log_param(self._run.info.run_id, key=k, value=v)
 
     def set_prefix(self, prefix: str) -> 'MLFlowMonitor':
         self._prefix = prefix + '/'
@@ -123,16 +126,6 @@ class MLFlowMonitor(AbstractMetricsMonitor, AbstractLossMonitor):
         :param epoch_idx: epoch idx. If doesn't set - use last epoch idx stored in this class
         """
         self._log_metric(name, value, epoch_idx=epoch_idx)
-
-    def set_user_name(self, user_name: str) -> None:
-        self._client.set_tag(self._run.info.run_id, mlflow_tags.MLFLOW_USER, user_name)
-
-    def add_note(self, note_text: str) -> None:
-        self._client.set_tag(self._run.info.run_id, mlflow_tags.MLFLOW_RUN_NOTE, note_text)
-
-    def log_params(self, params_dict: dict) -> None:
-        for key, value in params_dict.items():
-            self._client.log_param(self._run.info.run_id, key, value)
 
     def close(self):
         self._client.set_terminated(self._run.info.run_id, status='FINISHED', end_time=int(time() * 1000))
