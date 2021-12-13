@@ -45,7 +45,11 @@ class MLFlowMonitor(AbstractMetricsMonitor, AbstractLossMonitor):
             git_commit = active_run.data.tags.get(mlflow_tags.MLFLOW_GIT_COMMIT)
 
         self._client = MlflowClient(tracking_uri=server_url)
-        experiment = self._client.get_experiment_by_name(name=project_name)
+        try:
+            ret = self._client.create_experiment(project_name)
+            experiment = self._client.get_experiment_by_name(project_name)
+        except:
+            experiment = self._client.get_experiment_by_name(project_name)
 
         self._run = None
         if experiment is not None:
