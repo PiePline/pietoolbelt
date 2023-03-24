@@ -7,5 +7,5 @@ torch>=0.4.1
 torchvision
 sklearn
 albumentations
-mlflow==1.15.0
+mlflow==2.2.1
 boto3
